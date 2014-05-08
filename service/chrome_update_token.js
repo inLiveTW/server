@@ -17,34 +17,43 @@ Parse.Cloud.useMasterKey();
 Token = Parse.Object.extend("token");
 Chrome_Token = Parse.Object.extend("chrome_token");
 
-var token = [];
-var timestamp = {};
+var token = {};
+var list = [];
 var query = new Parse.Query(Token);
 var upset = new Parse.Query(Chrome_Token);
 query.find({
   success: function(results) {
-    token = [];
-    timestamp = {};
+    token = {};
+    list = [];
     results.forEach(function(item){
-      if ( /[0-9]+\/[\w]+/i.exec(item.attributes.token) ) {
-        var updateAt = new Date(item.createdAt).getTime();
-        if ((timestamp[item.attributes.token] || 0) < updateAt) {
-          timestamp[item.attributes.token] = updateAt;  
+      var updateAt = new Date(item.createdAt).getTime();
+      var srcToken = item.attributes.token;
+      if ( /[0-9]+\/[\w]+/i.exec(srcToken) ) {
+        if ( ! token[srcToken] ) {
+          token[srcToken] = {
+            'token': srcToken,
+            'channel': item.attributes.channel,
+            'responseAt': updateAt
+          }
+        }else if (token[srcToken]['responseAt'] < updateAt){
+          token[srcToken]['responseAt'] = updateAt;
+          token[srcToken]['channel'] = item.attributes.channel;
         }
-        if (token.indexOf(item.attributes.token) < 0) {
-          token.push(item.attributes.token);
+        if (list.indexOf(srcToken) < 0) {
+          list.push(srcToken);
         }
       }
     });
     Parse.initialize(cfg.live.appid, cfg.live.key, cfg.live.master);
     Parse.Cloud.useMasterKey();
-    async.each(token, function (item, cb) {
+    async.each(list, function (item, cb) {
       upset.equalTo("token", item);
       upset.first({
         success: function(chrome_token) {
           if ( chrome_token ) {
             chrome_token.save({
-              "responseAt": timestamp[item]
+              "responseAt": token[item]['responseAt'],
+              "channel": (token[item]['channel'] + '').split(',')
             },{
               success: function(chrome_token) {
                 console.log('success update', item);
@@ -57,7 +66,8 @@ query.find({
             chrome_token = new Chrome_Token();
             chrome_token.save({
               "token": item,
-              "responseAt": timestamp[item]
+              "responseAt": token[item]['responseAt'],
+              "channel": (token[item]['channel'] + '').split(',')
             },{
               success: function(chrome_token) {
                 console.log('success create', item);
