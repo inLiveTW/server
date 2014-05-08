@@ -117,7 +117,7 @@ getAccess({
         //   process.exit(0);
         // });
         results.forEach(function(item){
-          queue.push({'access':access ,'token':item.attributes.token, 'msg':'『5/6』仿聲鳥正在松菸護樹現場表演'}, function (err, task) {
+          queue.push({'access':access ,'token':item.attributes.token, 'msg':'由快樂‧樂生發起0508(今日)徒步行動,\n將於12:40開始公民記者將為各位直播.'}, function (err, task) {
               console.log('completed!', task.token);
               count -= 1;
               if ( count < 1 ) {
