@@ -27,18 +27,87 @@ try {
   db_firebase.auth(cfg.release.token, function(error, result) {
     if(error) {
       throw "Login Failed!" + error;
-    } else {
-      console.log('Authenticated successfully with payload:', result.auth);
-      console.log('Auth expires at:', new Date(result.expires * 1000));
     }
   });
 
   var fetch = {
       'youtube': function(id, cb) {
+          http.get('http://gdata.youtube.com/feeds/api/users/' + id + '?v=2&status=active&alt=json', function(res) {
+            var body = '';
+            var active = [];
+            res.on('data', function(chunk) {
+              body += chunk;
+            });
+            res.on('end', function() {
+              body = JSON.parse(body);
+              if ( body.entry ) {
+                var cid = /user:(\w+)/.exec(body.entry.id.$t);
+                cb(null, [{
+                  'type': 'youtube',
+                  'title': body.entry.title.$t,
+                  'cid': cid && cid[1],
+                  'logo': body.entry.media$thumbnail.url,
+                  'url': body.entry.link[0].href
+                }]);
+              }else{
+                cb(null, []);
+              }
+            });
+          }).on('error', function(e) {
+              cb(null, []);
+          });
       },
       'ustream': function(id, cb){
+          http.get('http://api.ustream.tv/json?subject=channel&uid=' + id + '&command=getInfo', function(res) {
+            var body = '';
+            var live = [];
+            res.on('data', function(chunk) {
+              body += chunk;
+            });
+            res.on('end', function() {
+              body = JSON.parse(body);
+              if (body.results.status == 'live') {
+                  live.push({
+                      'type': 'ustream',
+                      'title': body.results.title,
+                      'cid': body.results.id,
+                      'url': 'http://www.ustream.tv/channel/' + body.results.id,
+                      'logo': body.results.imageUrl && body.results.imageUrl.small
+                  });
+              }
+
+              cb(null, live);
+            });
+          }).on('error', function(e) {
+              cb(null, []);
+          });
       },
       'ustream_user': function(id, cb){
+          http.get('http://api.ustream.tv/json?subject=user&uid=' + id + '&command=listAllChannels', function(res) {
+            var body = '';
+            var live = [];
+            res.on('data', function(chunk) {
+              body += chunk;
+            });
+            res.on('end', function() {
+              body = JSON.parse(body);
+              body.results.forEach(function(channel){
+                  if (channel.isProtected == false) {
+                      live.push({
+                          'type': 'ustream',
+                          'title': channel.title,
+                          'cid': channel.id,
+                          'url': 'http://www.ustream.tv/channel/' + channel.id,
+                          'logo': channel.imageUrl && channel.imageUrl.small
+                      });
+                  }
+              });
+
+              cb(null, live);
+            });
+          }).on('error', function(e) {
+              cb(null, []);
+          });
       }
   }
 
@@ -49,60 +118,28 @@ try {
 
       query.find({
           success: function(channel) {
-              async.parallel({
-                  'database': function(cb){
-                      db_firebase.child('live').once('value', function(live) {
-                          var db = live.val();
-                          for (key in db)
-                          {
-                              db[key].status = 'offlive';
-                          }
-                          cb(null, db || {});
-                      })
-                  },
-                  'live': function(cb){
-                      async.map(channel, function(item, cb){
-                          if ( fetch[item.attributes.type] ) {
-                              fetch[item.attributes.type](item.attributes.uid, cb);
-                          }else{
-                              cb(null, []);
-                          }
-                      }, function (err, results) {
-                          cb(null, results);
-                      });
+              async.map(channel, function(item, cb){
+                  if ( fetch[item.attributes.type] ) {
+                      fetch[item.attributes.type](item.attributes.uid, cb);
+                  }else{
+                      cb(null, []);
                   }
               }, function (err, results) {
                   var count = 0;
-                  var updated_at = Math.floor(Date.now() / 1000);
-                  var live = results['database'] || {};
-                  var new_live = [];
+                  var public_channel = [];
 
-
-                  results['live'].forEach(function(source, index){
-                      source.forEach(function(active){
-                          var name = (active.type=='youtube' ? 'y_' : 'u_')+active.vid;
-                          if ( !live[name] ) {
-                              live[name] = {
-                                  'vuid': uuid.v4()
-                              };
-                              new_live.push(active);
+                  results.forEach(function(source, index){
+                      source.forEach(function(item){
+                          var name = (item.type=='youtube' ? 'y_' : 'u_')+item.cid;
+                          public_channel[name] = {};
+                          for (key in item) {
+                              public_channel[name][key] = item[key];
                           }
-                          for (key in active) {
-                              live[name][key] = active[key];
-                          }
-                          live[name]['logo'] = active.thumb || channel[index].attributes.logo;
-                          live[name]['status'] = 'live';
-                          live[name].updated_at = updated_at;
+                          public_channel[name]['logo'] = item.logo || channel[index].attributes.logo;
                           count += 1;
                       });
                   });
-                  for (key in live)
-                  {
-                      if ( (live[key].updated_at + 15 * 60) < updated_at ) {
-                          delete live[key];
-                      }
-                  }
-                  db_firebase.child('live').set(live, function(){
+                  db_firebase.child('channel').set(public_channel, function(){
                     cb && cb(count);
                   });
               });
@@ -114,12 +151,11 @@ try {
   }
 
   parser(function (count) {
-      exec('echo ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' Live Run! ' + count + ' >> /var/log/serv_live.log')
+      console.log(new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' Channel Run! ' + count);
       process.exit(0);
   });
 
 }
 catch(err) {
-    exec('echo ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ' + err + ' >> /var/log/serv_live.log')
-    console.log('ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ' + err)
+    console.log('ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ' + err);
 }
