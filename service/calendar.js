@@ -115,7 +115,7 @@ try {
   };
 
   parser(function () {
-      exec('echo ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + 'Calendar Run! >> /var/log/serv_calendar.log')
+      exec('echo ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' Calendar Run! >> /var/log/serv_calendar.log')
       process.exit(0);
   });
 

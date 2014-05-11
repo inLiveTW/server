@@ -188,7 +188,7 @@ try {
   }
 
   parser(function (count) {
-      exec('echo ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + 'Live Run! ' + count + ' >> /var/log/serv_live.log')
+      exec('echo ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' Live Run! ' + count + ' >> /var/log/serv_live.log')
       process.exit(0);
   });
 
