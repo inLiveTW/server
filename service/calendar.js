@@ -30,10 +30,7 @@ try {
   var liveDB = new Firebase(cfg.release.host);
   liveDB.auth(cfg.release.token, function(error, result) {
     if(error) {
-      console.log("Login Failed!", error);
-    } else {
-      console.log('Authenticated successfully with payload:', result.auth);
-      console.log('Auth expires at:', new Date(result.expires * 1000));
+      throw "Login Failed!" + error;
     }
   });
 
@@ -115,12 +112,11 @@ try {
   };
 
   parser(function () {
-      exec('echo ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' Calendar Run! >> /var/log/serv_calendar.log')
-      process.exit(0);
+    console.log(new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' Calendar Run!');
+    process.exit(0);
   });
 
 }
 catch(err) {
-    exec('echo ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ' + err + ' >> /var/log/serv_calendar.log')
-    console.log('ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ' + err)
+    console.log('ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ', err)
 }

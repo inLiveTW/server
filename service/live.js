@@ -27,9 +27,6 @@ try {
   db_firebase.auth(cfg.release.token, function(error, result) {
     if(error) {
       throw "Login Failed!" + error;
-    } else {
-      console.log('Authenticated successfully with payload:', result.auth);
-      console.log('Auth expires at:', new Date(result.expires * 1000));
     }
   });
 
@@ -188,12 +185,11 @@ try {
   }
 
   parser(function (count) {
-      exec('echo ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' Live Run! ' + count + ' >> /var/log/serv_live.log')
+      console.log(new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' Live Run! ' + count);
       process.exit(0);
   });
 
 }
 catch(err) {
-    exec('echo ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ' + err + ' >> /var/log/serv_live.log')
-    console.log('ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ' + err)
+    console.log('ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ', err)
 }
