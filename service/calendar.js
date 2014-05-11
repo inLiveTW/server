@@ -1,4 +1,4 @@
-var http = require('http'),
+var https = require('https'),
     async = require('async'),
     fs = require('fs'),
     exec = require('child_process').exec,

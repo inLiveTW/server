@@ -176,17 +176,19 @@ try {
                           delete live[key];
                       }
                   }
-                  db_firebase.child('live').set(live, cb);
+                  db_firebase.child('live').set(live, function(){
+                    cb && cb(count);
+                  });
               });
           },
           error: function(error) {
-              console.log("Fetch Channel Error: " + error.code + " " + error.message);
+              throw "Fetch Channel Error: " + error.code + " " + error.message;
           }
       });
   }
 
-  parser(function () {
-      exec('echo ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + 'Live Run! >> /var/log/serv_live.log')
+  parser(function (count) {
+      exec('echo ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + 'Live Run! ' + count + ' >> /var/log/serv_live.log')
       process.exit(0);
   });
 
