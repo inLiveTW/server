@@ -5,30 +5,18 @@ var http = require('http'),
     uuid = require('node-uuid'),
     time = require('time');
 
-var Live = require('parse').Parse;
-var Firebase = require('firebase');
 try {
 
-  var pwd = process.argv[1];
-  pwd = pwd.substr(0, pwd.lastIndexOf('/'));
-
-  if ( !fs.existsSync(pwd + '/database.json') ) {
-      fs.linkSync(pwd + '/database-sample.json', pwd + '/database.json');
-  }
-
-  var cfg = require(pwd + '/database.json');
-
-  Live.initialize(cfg.live.appid, cfg.live.key, cfg.live.master);
-  Live.Cloud.useMasterKey();
+  var DataBase = require('./class/initial.js');
+  var Live = DataBase.Live,
+      Chrome = DataBase.Chrome,
+      Mobile = DataBase.Mobile,
+      Release = DataBase.Release;
 
   var Channel = Live.Object.extend("channel");
-
-  var db_firebase = new Firebase(cfg.release.host);
-  db_firebase.auth(cfg.release.token, function(error, result) {
-    if(error) {
-      throw "Login Failed!" + error;
-    }
-  });
+  var Live_Location = Live.Object.extend("live_location");
+  var Chrome_Location = Chrome.Object.extend("live_location");
+  var Mobile_Location = Mobile.Object.extend("live_location");
 
   var fetch = {
       'youtube': function(id, cb) {
@@ -121,8 +109,54 @@ try {
       query.find({
           success: function(channel) {
               async.parallel({
+                  'mobile_location': function(cb){
+                    var temp = {};
+                    var query = new Mobile.Query(Mobile_Location);
+                    query.find({
+                      success: function(results) {
+                        async.each(results, function(obj, cb){
+                          if ( ! temp[obj.get('vuid')] ) {
+                            temp[obj.get('vuid')] = {};
+                          }
+                          temp[obj.get('vuid')][obj.get('location')] = (temp[obj.get('vuid')][obj.get('location')] || 0) + 1;
+                          obj.destroy({
+                            'success': function(){ cb(); },
+                            'error': function(){ cb(); }
+                          });
+                        }, function(){
+                          cb && cb(null, temp);
+                        });
+                      },
+                      error: function(error) {
+                        console.log("Fetch Mobile Location Error: " + error.code + " " + error.message);
+                      }
+                    });
+                  },
+                  'chrome_location': function(cb){
+                    var temp = {};
+                    var query = new Chrome.Query(Chrome_Location);
+                    query.find({
+                      success: function(results) {
+                        async.each(results, function(obj, cb){
+                          if ( ! temp[obj.get('vuid')] ) {
+                            temp[obj.get('vuid')] = {};
+                          }
+                          temp[obj.get('vuid')][obj.get('location')] = (temp[obj.get('vuid')][obj.get('location')] || 0) + 1;
+                          obj.destroy({
+                            'success': function(){ cb(); },
+                            'error': function(){ cb(); }
+                          });
+                        }, function(){
+                          cb && cb(null, temp);
+                        });
+                      },
+                      error: function(error) {
+                        console.log("Fetch Chrome Location Error: " + error.code + " " + error.message);
+                      }
+                    });
+                  },
                   'database': function(cb){
-                      db_firebase.child('live').once('value', function(live) {
+                      Release.child('live').once('value', function(live) {
                           var db = live.val();
                           for (key in db)
                           {
@@ -148,7 +182,6 @@ try {
                   var live = results['database'] || {};
                   var new_live = [];
 
-
                   results['live'].forEach(function(source, index){
                       source.forEach(function(active){
                           var name = (active.type=='youtube' ? 'y_' : 'u_')+active.vid;
@@ -167,14 +200,64 @@ try {
                           count += 1;
                       });
                   });
+
                   for (key in live)
                   {
                       if ( (live[key].updated_at + 15 * 60) < updated_at ) {
                           delete live[key];
                       }
                   }
-                  db_firebase.child('live').set(live, function(){
-                    cb && cb(count);
+
+                  async.each(Object.keys(live), function(key, cb){
+                    var vuid = live[key]['vuid'];
+
+                    var query = new Live.Query(Live_Location);
+                    query.equalTo("vuid", vuid);
+
+                    query.first({
+                      success: function(object) {
+                        object = object || new Live_Location();
+                        object.set('vuid', vuid);
+
+                        var location = object.get('location') || {};
+
+                        for (name in results['chrome_location'][vuid]){
+                          location[name] = (location[name] || 0) + results['chrome_location'][vuid][name];
+                        }
+
+                        for (name in results['mobile_location'][vuid]){
+                          location[name] = (location[name] || 0) + results['mobile_location'][vuid][name];
+                        }
+
+                        object.set('location', location);
+
+                        object.save(null, {
+                          'success': function(){ cb && cb(); },
+                          'error': function(){ cb && cb(); }
+                        });
+
+                        var win = null,
+                            vote = 0;
+
+                        for (name in location) {
+                          if ( location[name] > vote ) {
+                            win = name;
+                            vote = location[name];
+                          }
+                        };
+
+                        live[key]['location'] = win;
+                      },
+                      error: function(error) {
+                        console.log("Location Error: " + error.code + " " + error.message);
+                        cb && cb();
+                      }
+                    });
+
+                  }, function(){
+                    Release.child('live').set(live, function(){
+                      cb && cb(count);
+                    });
                   });
               });
           },
