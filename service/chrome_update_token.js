@@ -1,26 +1,19 @@
 var https = require('https'),
-    fs = require('fs'),
     async = require('async');
 
-var Parse = require('parse').Parse;
+var DataBase = require('./class/initial.js');
+var Live = DataBase.Live,
+    Chrome = DataBase.Chrome,
+    Mobile = DataBase.Mobile,
+    Release = DataBase.Release;
 
-if ( !fs.existsSync('database.json') ) {
-    fs.linkSync('database-sample.json', 'database.json');
-}
-
-var cfg = require('./database.json');
-
-
-Parse.initialize(cfg.chrome.appid, cfg.chrome.key, cfg.chrome.master);
-Parse.Cloud.useMasterKey();
-
-Token = Parse.Object.extend("token");
-Chrome_Token = Parse.Object.extend("chrome_token");
+Chrome_Token = Chrome.Object.extend("chrome_token");
+Live_Token = Live.Object.extend("chrome_token");
 
 var token = {};
 var list = [];
-var query = new Parse.Query(Token);
-var upset = new Parse.Query(Chrome_Token);
+var query = new Chrome.Query(Chrome_Token);
+var upset = new Live.Query(Live_Token);
 query.find({
   success: function(results) {
     token = {};
@@ -44,44 +37,62 @@ query.find({
         }
       }
     });
-    Parse.initialize(cfg.live.appid, cfg.live.key, cfg.live.master);
-    Parse.Cloud.useMasterKey();
-    async.each(list, function (item, cb) {
-      upset.equalTo("token", item);
-      upset.first({
-        success: function(chrome_token) {
-          if ( chrome_token ) {
-            chrome_token.save({
-              "responseAt": token[item]['responseAt'],
-              "channel": (token[item]['channel'] + '').split(',')
-            },{
-              success: function(chrome_token) {
-                console.log('success update', item);
-              },
-              error: function(chrome_token, error) {
-                console.log('failed update', item);
-              }
+
+    async.parallel([
+        function (cb) {
+          async.each(results, function (obj, cb) {
+            obj.destroy({
+              'success': function(){ cb(); },
+              'error': function(){ cb(); }
             });
-          }else{
-            chrome_token = new Chrome_Token();
-            chrome_token.save({
-              "token": item,
-              "responseAt": token[item]['responseAt'],
-              "channel": (token[item]['channel'] + '').split(',')
-            },{
-              success: function(chrome_token) {
-                console.log('success create', item);
-              },
-              error: function(chrome_token, error) {
-                console.log('failed create', item);
-              }
-            });
-          }
+          }, cb);
         },
-        error: function(error) {
-          console.log('failed', item);
+        function(cb){
+          async.each(list, function (item, cb) {
+            upset.equalTo("token", item);
+            upset.first({
+              success: function(chrome_token) {
+                if ( chrome_token ) {
+                  chrome_token.save({
+                    "responseAt": token[item]['responseAt'],
+                    "channel": (token[item]['channel'] + '').split(',')
+                  },{
+                    success: function(chrome_token) {
+                      console.log('success update', item);
+                      cb();
+                    },
+                    error: function(chrome_token, error) {
+                      console.log('failed update', item);
+                      cb();
+                    }
+                  });
+                }else{
+                  chrome_token = new Live_Token();
+                  chrome_token.save({
+                    "token": item,
+                    "responseAt": token[item]['responseAt'],
+                    "channel": (token[item]['channel'] + '').split(',')
+                  },{
+                    success: function(chrome_token) {
+                      console.log('success create', item);
+                      cb();
+                    },
+                    error: function(chrome_token, error) {
+                      console.log('failed create', item);
+                      cb();
+                    }
+                  });
+                }
+              },
+              error: function(error) {
+                console.log('failed', item);
+                cb();
+              }
+            });
+          }, cb);
         }
-      });
+    ], function () {
+      process.exit(0);
     });
   },
   error: function(error) {
