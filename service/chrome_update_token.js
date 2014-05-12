@@ -14,6 +14,8 @@ var token = {};
 var list = [];
 var query = new Chrome.Query(Chrome_Token);
 var upset = new Live.Query(Live_Token);
+
+var now = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().replace(/\..+/,'');
 query.find({
   success: function(results) {
     token = {};
@@ -58,11 +60,11 @@ query.find({
                     "channel": (token[item]['channel'] + '').split(',')
                   },{
                     success: function(chrome_token) {
-                      console.log('success update', item);
+                      console.log(now ,'success update', item);
                       cb();
                     },
                     error: function(chrome_token, error) {
-                      console.log('failed update', item);
+                      console.log(now ,'failed update', item);
                       cb();
                     }
                   });
@@ -74,18 +76,18 @@ query.find({
                     "channel": (token[item]['channel'] + '').split(',')
                   },{
                     success: function(chrome_token) {
-                      console.log('success create', item);
+                      console.log(now ,'success create', item);
                       cb();
                     },
                     error: function(chrome_token, error) {
-                      console.log('failed create', item);
+                      console.log(now ,'failed create', item);
                       cb();
                     }
                   });
                 }
               },
               error: function(error) {
-                console.log('failed', item);
+                console.log(now ,'failed', item);
                 cb();
               }
             });
