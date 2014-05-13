@@ -101,6 +101,18 @@ try {
       }
   }
 
+  var getHighest = function (list, deft){
+    var win = null, vote = 0;
+    for (name in list) {
+      if ( list[name] > vote ) {
+        win = name;
+        vote = list[name];
+      }else if ( list[name] == vote && deft != name ){
+        win = deft;
+      }
+    };
+    return win;
+  }
 
   var query = new Live.Query(Channel);
   var parser = function (cb){
@@ -211,49 +223,71 @@ try {
                   async.each(Object.keys(live), function(key, cb){
                     var vuid = live[key]['vuid'];
 
-                    var query = new Live.Query(Live_Location);
-                    query.equalTo("vuid", vuid);
+                    async.waterfall([
+                      function (cb) {
+                        var query = new Live.Query(Live_Location);
+                        query.equalTo("vuid", vuid);
 
-                    query.first({
-                      success: function(object) {
-                        object = object || new Live_Location();
-                        object.set('vuid', vuid);
-
-                        var location = object.get('location') || {};
-
-                        for (name in results['chrome_location'][vuid]){
-                          location[name] = (location[name] || 0) + results['chrome_location'][vuid][name];
-                        }
-
-                        for (name in results['mobile_location'][vuid]){
-                          location[name] = (location[name] || 0) + results['mobile_location'][vuid][name];
-                        }
-
-                        object.set('location', location);
-
-                        object.save(null, {
-                          'success': function(){ cb && cb(); },
-                          'error': function(){ cb && cb(); }
-                        });
-
-                        var win = null,
-                            vote = 0;
-
-                        for (name in location) {
-                          if ( location[name] > vote ) {
-                            win = name;
-                            vote = location[name];
+                        query.first({
+                          success: function(object) {
+                            if ( object ) {
+                              cb(true, object);
+                            }else{
+                              cb(null);
+                            }
+                          },
+                          error: function(error) {
+                            console.log("Location by vuid Error: " + error.code + " " + error.message);
+                            cb(null);
                           }
-                        };
-
-                        live[key]['location'] = win;
+                        });
                       },
-                      error: function(error) {
-                        console.log("Location Error: " + error.code + " " + error.message);
-                        cb && cb();
-                      }
-                    });
+                      function (cb) {
+                        var object = new Live_Location();
 
+                        var query = new Live.Query(Live_Location);
+                        query.equalTo("name", (live[key]['type']=='youtube' ? 'y_' : 'u_')+live[key]['vid']);
+
+                        query.first({
+                          success: function(parent) {
+                            if ( parent ) {
+                              parent = getHighest(parent.get('location'));
+                              if ( parent ) {
+                                var location = {};
+                                location[parent] = 1;
+                                object.set('location', location);
+                              }
+                            }
+                            cb(null, object);
+                          },
+                          error: function(error) {
+                            console.log("Location by name Error: " + error.code + " " + error.message);
+                            cb(null, object);
+                          }
+                        });
+                      }
+                    ], function (err, object) {
+                      object.set('vuid', vuid);
+                      var location = object.get('location') || {};
+
+                      for (name in results['chrome_location'][vuid]){
+                        location[name] = (location[name] || 0) + results['chrome_location'][vuid][name];
+                      }
+
+                      for (name in results['mobile_location'][vuid]){
+                        location[name] = (location[name] || 0) + results['mobile_location'][vuid][name];
+                      }
+
+                      object.set('name', (live[key]['type']=='youtube' ? 'y_' : 'u_')+live[key]['vid']);
+                      object.set('location', location);
+
+                      live[key]['location'] = getHighest(location);
+                      
+                      object.save(null, {
+                        'success': function(){ cb && cb(); },
+                        'error': function(){ cb && cb(); }
+                      });
+                    });
                   }, function(){
                     Release.child('live').set(live, function(){
                       cb && cb(count);

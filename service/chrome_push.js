@@ -117,7 +117,7 @@ getAccess({
         //   process.exit(0);
         // });
         results.forEach(function(item){
-          queue.push({'access':access ,'token':item.attributes.token, 'msg':'5/8(今天)PM6 仿聲鳥『林口長庚醫院周邊』用\n弦樂四重奏把更多人拉近議題裡,先以四季紅或K525當第一首歌吸引人群，再進島嶼天光.'}, function (err, task) {
+          queue.push({'access':access ,'token':item.attributes.token, 'msg':'立法院內直播請收看 cks6662.'}, function (err, task) {
               console.log('completed!', task.token);
               count -= 1;
               if ( count < 1 ) {
