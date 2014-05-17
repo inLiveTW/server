@@ -89,7 +89,7 @@ try {
             'type': 'google',
             'day': item.start.date ? true : false,
             'start': (item.start.date ? item.start.date + 'T00:00:00+08:00' : item.start.dateTime) || '',
-            'end': (item.start.date ? item.end.date + 'T00:00:00+08:00' : item.end.dateTime) || '',
+            'end': (item.end.date ? item.end.date + 'T00:00:00+08:00' : item.end.dateTime) || '',
             'title': item.summary || '',
             'location': item.location || '',
             'link': item.htmlLink

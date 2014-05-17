@@ -22,7 +22,7 @@ try {
               "message": (res.data[i].message || res.data[i].description),
               "picture": (res.data[i].full_picture || res.data[i].picture || ''),
               "link": res.data[i].link || '',
-              "datetime": res.data[i].created_time
+              "datetime": new Date(new Date(res.data[i].created_time).getTime()+8*60*60*1000).toISOString().replace(/\.\w+/i,'+08:00')
             });
           }
         }
