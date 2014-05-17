@@ -32,6 +32,7 @@ try {
                       active.push({
                           type: 'youtube',
                           title: body.feed.entry[i].title.$t,
+                          cid: id,
                           vid: vid,
                           user: id,
                           url: 'http://youtu.be/' + vid
@@ -58,6 +59,7 @@ try {
                   live.push({
                       type: 'ustream',
                       title: body.results.title,
+                      cid: id,
                       vid: body.results.id,
                       url: 'http://www.ustream.tv/channel/' + body.results.id
                   });
@@ -83,6 +85,7 @@ try {
                       live.push({
                           type: 'ustream',
                           title: channel.title,
+                          cid: id,
                           vid: channel.id,
                           user: id,
                           url: 'http://www.ustream.tv/channel/' + channel.id,
