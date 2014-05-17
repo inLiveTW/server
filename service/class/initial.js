@@ -1,7 +1,6 @@
 var fs = require('fs'),
     exec = require('child_process').exec;
 
-
 var pwd = process.argv[1];
 pwd = pwd.substr(0, pwd.lastIndexOf('/'));
 
@@ -12,6 +11,9 @@ if ( !fs.existsSync(pwd + '/database.json') ) {
 var cfg = require(pwd + '/database.json');
 
 var Firebase = require('firebase');
+
+var Graph = require('fbgraph');
+    Graph.setAccessToken(cfg.fbevent.fbtoken);
 
 var Live = require('./live.js').Parse,
     Chrome = require('./chrome.js').Parse,
@@ -37,5 +39,6 @@ module.exports = {
   'Live': Live,
   'Chrome': Chrome,
   'Mobile': Mobile,
+  'FBgraph': Graph,
   'Release': Release
 };

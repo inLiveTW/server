@@ -117,7 +117,7 @@ getAccess({
         //   process.exit(0);
         // });
         results.forEach(function(item){
-          queue.push({'access':access ,'token':item.attributes.token, 'msg':'立法院內直播請收看 cks6662.'}, function (err, task) {
+          queue.push({'access':access ,'token':item.attributes.token, 'msg':'『直播』0515 19:15 輔大反恐同週主題講座.'}, function (err, task) {
               console.log('completed!', task.token);
               count -= 1;
               if ( count < 1 ) {

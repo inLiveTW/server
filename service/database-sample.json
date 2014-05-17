@@ -1,5 +1,29 @@
 {
-  "host": "twlive.firebaseio.com",
-  "token": "QLT9CbSMICmghZqlJhZFth0cU5AyrtBdVUk7Ee0a",
-  "channel": "mongodb:\/\/live:livetw2014ngo@oceanic.mongohq.com:10000\/live"
+  "release": {
+    "host": "",
+    "token": ""
+  },
+  "live": {
+    "appid": "",
+    "key": "",
+    "master": ""
+  },
+  "push": {
+    "client_id": "",
+    "client_secret": "",
+    "refresh_token": ""
+  },
+  "chrome": {
+    "appid": "",
+    "key": "",
+    "master": ""
+  },
+  "mobile": {
+    "appid": "",
+    "key": "",
+    "master": ""
+  },
+  "fbevent": {
+    "fbtoken": ""
+  }
 }

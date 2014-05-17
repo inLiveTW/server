@@ -1,7 +1,5 @@
 var http = require('http'),
     async = require('async'),
-    fs = require('fs'),
-    exec = require('child_process').exec,
     uuid = require('node-uuid'),
     time = require('time');
 
@@ -116,8 +114,6 @@ try {
 
   var query = new Live.Query(Channel);
   var parser = function (cb){
-      now = new time.Date().setTimezone('Asia/Taipei');
-
       query.find({
           success: function(channel) {
               async.parallel({
@@ -267,7 +263,7 @@ try {
                         });
                       }
                     ], function (err, object) {
-                      object.set('vuid', vuid);
+                      
                       var location = object.get('location') || {};
 
                       for (name in results['chrome_location'][vuid]){
@@ -278,11 +274,12 @@ try {
                         location[name] = (location[name] || 0) + results['mobile_location'][vuid][name];
                       }
 
+                      object.set('vuid', vuid);
                       object.set('name', (live[key]['type']=='youtube' ? 'y_' : 'u_')+live[key]['vid']);
                       object.set('location', location);
 
                       live[key]['location'] = getHighest(location);
-                      
+
                       object.save(null, {
                         'success': function(){ cb && cb(); },
                         'error': function(){ cb && cb(); }
@@ -302,11 +299,11 @@ try {
   }
 
   parser(function (count) {
-      console.log(new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' Live Run! ' + count);
+      console.log(new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' Live Run! ' + count);
       process.exit(0);
   });
 
 }
 catch(err) {
-    console.log('ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ', err)
+    console.log('ERROR( ' + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' ): ', err)
 }
