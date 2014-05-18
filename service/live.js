@@ -35,7 +35,8 @@ try {
                           cid: id,
                           vid: vid,
                           user: id,
-                          url: 'http://youtu.be/' + vid
+                          url: 'http://youtu.be/' + vid,
+                          embed: 'http://www.youtube.com/embed/' + vid + '?autoplay=1'
                       });
                   };
               }
@@ -61,7 +62,8 @@ try {
                       title: body.results.title,
                       cid: id,
                       vid: body.results.id,
-                      url: 'http://www.ustream.tv/channel/' + body.results.id
+                      url: 'http://www.ustream.tv/channel/' + body.results.id,
+                      embed: 'http://www.ustream.tv/embed/' + body.results.id + '?wmode=direct&autoplay=true'
                   });
               }
 
@@ -89,6 +91,7 @@ try {
                           vid: channel.id,
                           user: id,
                           url: 'http://www.ustream.tv/channel/' + channel.id,
+                          embed: 'http://www.ustream.tv/embed/' + channel.id + '?wmode=direct&autoplay=true'
                           thumb: channel.imageUrl.small
                       });
                   }
