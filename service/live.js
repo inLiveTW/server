@@ -91,7 +91,7 @@ try {
                           vid: channel.id,
                           user: id,
                           url: 'http://www.ustream.tv/channel/' + channel.id,
-                          embed: 'http://www.ustream.tv/embed/' + channel.id + '?wmode=direct&autoplay=true'
+                          embed: 'http://www.ustream.tv/embed/' + channel.id + '?wmode=direct&autoplay=true',
                           thumb: channel.imageUrl.small
                       });
                   }
