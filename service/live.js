@@ -33,7 +33,7 @@ try {
                           type: 'youtube',
                           title: body.feed.entry[i].title.$t,
                           cid: id,
-                          vid: vid,
+                          vid: 'y_' + vid,
                           user: id,
                           url: 'http://youtu.be/' + vid,
                           embed: 'http://www.youtube.com/embed/' + vid + '?autoplay=1'
@@ -61,7 +61,7 @@ try {
                       type: 'ustream',
                       title: body.results.title,
                       cid: id,
-                      vid: body.results.id,
+                      vid: 'u_' + body.results.id,
                       url: 'http://www.ustream.tv/channel/' + body.results.id,
                       embed: 'http://www.ustream.tv/embed/' + body.results.id + '?wmode=direct&autoplay=true'
                   });
@@ -88,7 +88,7 @@ try {
                           type: 'ustream',
                           title: channel.title,
                           cid: id,
-                          vid: channel.id,
+                          vid: 'u_' + channel.id,
                           user: id,
                           url: 'http://www.ustream.tv/channel/' + channel.id,
                           embed: 'http://www.ustream.tv/embed/' + channel.id + '?wmode=direct&autoplay=true',
@@ -198,19 +198,18 @@ try {
 
                   results['live'].forEach(function(source, index){
                       source.forEach(function(active){
-                          var name = (active.type=='youtube' ? 'y_' : 'u_')+active.vid;
-                          if ( !live[name] ) {
-                              live[name] = {
+                          if ( !live[active.vid] ) {
+                              live[active.vid] = {
                                   'vuid': uuid.v4()
                               };
                               new_live.push(active);
                           }
                           for (key in active) {
-                              live[name][key] = active[key];
+                              live[active.vid][key] = active[key];
                           }
-                          live[name]['logo'] = active.thumb || channel[index].attributes.logo;
-                          live[name]['status'] = 'live';
-                          live[name].updated_at = updated_at;
+                          live[active.vid]['logo'] = active.thumb || channel[index].attributes.logo;
+                          live[active.vid]['status'] = 'live';
+                          live[active.vid].updated_at = updated_at;
                           count += 1;
                       });
                   });
