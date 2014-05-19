@@ -1,41 +1,20 @@
 var https = require('https'),
     async = require('async'),
-    fs = require('fs'),
-    exec = require('child_process').exec,
-    uuid = require('node-uuid'),
-    time = require('time');
+    RRule = require('rrule').RRule;
     
-var graph = require('fbgraph');
-
-var Live = require('parse').Parse;
-var Firebase = require('firebase');
 try {
 
-  var pwd = process.argv[1];
-  pwd = pwd.substr(0, pwd.lastIndexOf('/'));
+    var DataBase = require('./class/initial.js');
+    var Live = DataBase.Live,
+        FBgraph = DataBase.FBgraph,
+        Release = DataBase.Release;
 
-  if ( !fs.existsSync(pwd + '/database.json') ) {
-      fs.linkSync(pwd + '/database-sample.json', pwd + '/database.json');
-  }
-
-  var cfg = require(pwd + '/database.json');
-
-  Live.initialize(cfg.live.appid, cfg.live.key, cfg.live.master);
-  Live.Cloud.useMasterKey();
   var Fbevent = Live.Object.extend("fbevent");
   var query = new Live.Query(Fbevent);
-
-  graph.setAccessToken(cfg.fbevent.fbtoken);
-
-  var liveDB = new Firebase(cfg.release.host);
-  liveDB.auth(cfg.release.token, function(error, result) {
-    if(error) {
-      throw "Login Failed!" + error;
-    }
-  });
+      query.ascending("start");
+      query.limit(20);
 
   var parser = function (cb){
-    var now = new time.Date().setTimezone('Asia/Taipei');
     var date = new Date().toISOString().replace(/T.*/gi, '');
 
     var source = [
@@ -65,8 +44,11 @@ try {
             success: function(results) {
               var data = [];
               async.each(results, function(item, cb){
-                graph.get(item.attributes.eid, function(err, res) {
-                  if (new Date(res.start_time).getTime() > new Date().getTime() + ( 16 * 60 * 60 * 1000 )) {
+                console.log(item.get('start'));
+                console.log(item.get('title'));
+                console.log(item.get('eid'));
+                FBgraph.get(item.attributes.eid, function(err, res) {
+                  if (new Date(res.start_time).getTime() > new Date().getTime()) {
                     data.push(res);
                   }
                   cb(null);
@@ -85,15 +67,34 @@ try {
       var events = {};
       results['google'].forEach(function(list){
         list.forEach(function(item){
-          events['google_' + item.id] = {
-            'type': 'google',
-            'day': item.start.date ? true : false,
-            'start': (item.start.date ? item.start.date + 'T00:00:00+08:00' : item.start.dateTime) || '',
-            'end': (item.end.date ? item.end.date + 'T00:00:00+08:00' : item.end.dateTime) || '',
-            'title': item.summary || '',
-            'location': item.location || '',
-            'link': item.htmlLink
-          };
+          var start = (item.start.date ? item.start.date + 'T00:00:00+08:00' : item.start.dateTime);
+          if ( item.recurrence ) {
+            var opt = RRule.parseString((item.recurrence+'').replace('RRULE:',''))
+                opt.dtstart = new Date(start);
+            var next = new RRule(opt).between(new Date(), new Date(Date.now()+14*24*60*60*1000));
+            if ( next.length ) {
+              start = new Date(new Date(next[0]).getTime()+8*60*60*1000).toISOString().replace(/\..+/gi,'+08:00');
+              events['google_' + item.id] = {
+                'type': 'google',
+                'day': item.start.date ? true : false,
+                'start': start,
+                'end': (item.end.date ? item.end.date + 'T00:00:00+08:00' : item.end.dateTime) || '',
+                'title': item.summary || '',
+                'location': item.location || '',
+                'link': item.htmlLink
+              };
+            }
+          }else{
+            events['google_' + item.id] = {
+              'type': 'google',
+              'day': item.start.date ? true : false,
+              'start': start,
+              'end': (item.end.date ? item.end.date + 'T00:00:00+08:00' : item.end.dateTime) || '',
+              'title': item.summary || '',
+              'location': item.location || '',
+              'link': item.htmlLink
+            };
+          }
         });
       });
       results['facebook'].forEach(function(item){
@@ -107,16 +108,16 @@ try {
           'link': 'https://www.facebook.com/' + item.id + '/'
         };
       });
-      liveDB.child('event').set(events, cb);
+      Release.child('event').set(events, cb);
     });
   };
 
   parser(function () {
-    console.log(new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' Calendar Run!');
+    console.log(new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' Calendar Run!');
     process.exit(0);
   });
 
 }
 catch(err) {
-    console.log('ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ', err)
+    console.log('ERROR( ' + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' ): ', err)
 }
