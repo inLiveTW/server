@@ -44,9 +44,6 @@ try {
             success: function(results) {
               var data = [];
               async.each(results, function(item, cb){
-                console.log(item.get('start'));
-                console.log(item.get('title'));
-                console.log(item.get('eid'));
                 FBgraph.get(item.attributes.eid, function(err, res) {
                   if (new Date(res.start_time).getTime() > new Date().getTime()) {
                     data.push(res);
