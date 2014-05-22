@@ -21,14 +21,14 @@ var query = new Parse.Query(Chrome_Token);
 var sendNotify = function(task, cb) {
   var access = task.access;
   var token = task.token;
-  var msg = task.msg;
   var message = JSON.stringify({
     'channelId': token,
     'subchannelId': '0',
     'payload': new Buffer(JSON.stringify({
       'type': 'message',
-      'url': 'http://www.google.com/',
-      'title': msg
+      'link': task.link || '',
+      'title': task.title,
+      'message': task.message
     })).toString('base64')
   });
 
@@ -117,7 +117,13 @@ getAccess({
         //   process.exit(0);
         // });
         results.forEach(function(item){
-          queue.push({'access':access ,'token':item.attributes.token, 'msg':'『即時新聞』05/19 松煙出現武裝警察.'}, function (err, task) {
+          queue.push({
+              'access':access ,
+              'token':item.attributes.token,
+              'title': '',
+              'message':'',
+              'link': '',
+            }, function (err, task) {
               console.log('completed!', task.token);
               count -= 1;
               if ( count < 1 ) {

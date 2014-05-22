@@ -45,7 +45,7 @@ try {
               var data = [];
               async.each(results, function(item, cb){
                 FBgraph.get(item.attributes.eid, function(err, res) {
-                  if (new Date(res.start_time).getTime() > new Date().getTime()) {
+                  if (new Date(res.start_time).getTime() > new Date().getTime() - 3 * 60 * 60 * 1000) {
                     data.push(res);
                   }
                   cb(null);
