@@ -18,9 +18,11 @@ try {
           'title': push.get('title') || '',
           'message': push.get('message') || '',
           'link': push.get('link') || '',
+          'datetime': push.get('start') || '',
         })
       });
       Release.child('notify').set(list, function(){
+        console.log(new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' Push Run! ' + count);
         process.exit(0);
       });
     },
