@@ -1,5 +1,7 @@
-var fs = require('fs'),
-    exec = require('child_process').exec;
+var fs          = require('fs');
+var https       = require('https');
+var querystring = require('querystring');
+var exec        = require('child_process').exec;
 
 var pwd = process.argv[1];
 pwd = pwd.substr(0, pwd.lastIndexOf('/'));
@@ -35,10 +37,52 @@ Release.auth(cfg.release.token, function(error, result) {
   }
 });
 
+var getGoogleAccess = function(cb){
+  var grant = querystring.stringify({
+    'grant_type': 'refresh_token',
+    'client_id': cfg.push.client_id,
+    'client_secret': cfg.push.client_secret,
+    'refresh_token': cfg.push.refresh_token
+  });
+
+  var req = https.request({
+    hostname: 'accounts.google.com',
+    path: '/o/oauth2/token',
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': grant.length
+    }
+  }, function(res){
+    var body = '';
+    res.setEncoding('utf8');
+    res.on('data', function(chunk) {
+      body += chunk;
+    });
+    res.on('end', function() {
+      body = JSON.parse(body);
+      if ( body.access_token ) {
+        console.log('Get Access Token:', body.access_token);
+        cb(null, body.access_token);
+      }else{
+        cb('Body Access Token is Null');
+      }
+    });
+  });
+
+  req.on('error', function(e) {
+    cb(e.message);
+  });
+
+  req.write(grant);
+  req.end();
+}
+
 module.exports = {
   'Live': Live,
   'Chrome': Chrome,
   'Mobile': Mobile,
   'FBgraph': Graph,
-  'Release': Release
+  'Release': Release,
+  'getGoogleAccess': getGoogleAccess
 };

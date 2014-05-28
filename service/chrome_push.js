@@ -1,139 +1,120 @@
-var https = require('https'),
-    fs = require('fs'),
-    querystring = require('querystring'),
-    async = require('async');
+var async = require('async');
+var https = require('https');
 
-var Parse = require('parse').Parse;
+try {
 
-if ( !fs.existsSync('database.json') ) {
-    fs.linkSync('database-sample.json', 'database.json');
-}
+  var DataBase = require('./class/initial.js');
+  var Live = DataBase.Live,
+      Mobile = DataBase.Mobile,
+      Release = DataBase.Release;
 
-var message = process.argv[2];
+  var Push = Mobile.Object.extend("push");
+  var Chrome_Token = Live.Object.extend("chrome_token");
 
-var cfg = require('./database.json');
-
-Parse.initialize(cfg.live.appid, cfg.live.key, cfg.live.master);
-Parse.Cloud.useMasterKey();
-var Chrome_Token = Parse.Object.extend("chrome_token");
-var query = new Parse.Query(Chrome_Token);
-
-var sendNotify = function(task, cb) {
-  var access = task.access;
-  var token = task.token;
-  var message = JSON.stringify({
-    'channelId': token,
-    'subchannelId': '0',
-    'payload': new Buffer(JSON.stringify({
-      'type': 'message',
-      'link': task.link || '',
-      'title': task.title,
-      'message': task.message
-    })).toString('base64')
-  });
-
-  var request = https.request({
-    hostname: 'www.googleapis.com',
-    path: '/gcm_for_chrome/v1/messages',
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': message.length,
-        'Authorization': 'Bearer ' + access
-    }
-  }, function(res){
-    var body = '';
-    res.setEncoding('utf8');
-    res.on('data', function(chunk) {
-      body += chunk;
+  var sendNotify = function(task, cb) {
+    var access = task.access;
+    var token = task.token;
+    var message = JSON.stringify({
+      'channelId': token,
+      'subchannelId': '0',
+      'payload': new Buffer(JSON.stringify({
+        'type': 'message',
+        'link': task.link || '',
+        'title': task.title || '',
+        'message': (task.message || '') + "\n- " + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'')
+      })).toString('base64')
     });
-    res.on('end', function() {
-      cb && cb(null, task);
-    });
-  });
 
-  request.on('error', function(e) {
-    cb && cb(e, task);
-  });
-
-  request.write(message);
-  request.end();
-}
-
-var getAccess = function(grant, cb){
-  var grant = querystring.stringify(grant);
-
-  var req = https.request({
-    hostname: 'accounts.google.com',
-    path: '/o/oauth2/token',
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': grant.length
-    }
-  }, function(res){
-    var body = '';
-    res.setEncoding('utf8');
-    res.on('data', function(chunk) {
-      body += chunk;
-    });
-    res.on('end', function() {
-      body = JSON.parse(body);
-      if ( body.access_token ) {
-        console.log('Get Access Token:', body.access_token);
-        cb(null, body.access_token);
-      }else{
-        cb('Body Access Token is Null');
+    var request = https.request({
+      hostname: 'www.googleapis.com',
+      path: '/gcm_for_chrome/v1/messages',
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': message.length,
+          'Authorization': 'Bearer ' + access
       }
+    }, function(res){
+      var body = '';
+      res.setEncoding('utf8');
+      res.on('data', function(chunk) {
+        body += chunk;
+      });
+      res.on('end', function() {
+        cb && cb(null, task);
+      });
     });
-  });
 
-  req.on('error', function(e) {
-    cb(e.message);
-  });
-
-  req.write(grant);
-  req.end();
-}
-
-getAccess({
-  'grant_type': 'refresh_token',
-  'client_id': cfg.push.client_id,
-  'client_secret': cfg.push.client_secret,
-  'refresh_token': cfg.push.refresh_token
-}, function(err, access){
-  if (err) {
-    console.log('Get Access Token Error:', err);
-  }else{
-    var queue = async.queue(function (task, callback) {
-      sendNotify(task, callback);
-    }, 5);
-
-    query.find({
-      success: function(results) {
-        var count = results.length;
-        // queue.push({'access':access ,'token':'05561045968221820805/fhcffinobmpdchcoapdeoinhdmlihiok', 'msg':'『5/4(日)14:00』和平路過服務處，要求費鴻泰承諾「先立法，再審查」'}, function(err, task){
-        //   console.log('completed!', task.token);
-        //   process.exit(0);
-        // });
-        results.forEach(function(item){
-          queue.push({
-              'access':access ,
-              'token':item.attributes.token,
-              'title': '',
-              'message':'',
-              'link': '',
-            }, function (err, task) {
-              console.log('completed!', task.token);
-              count -= 1;
-              if ( count < 1 ) {
-                process.exit(0);
-              }
-          });
-        });
-      }
+    request.on('error', function(e) {
+      cb && cb(e, task);
     });
+
+    request.write(message);
+    request.end();
   }
-});
+
+  var queue = async.queue(function (task, callback) {
+    sendNotify(task, callback);
+  }, 5);
+
+  DataBase.getGoogleAccess(function(err, access){
+    if (err) {
+      throw 'Get Access Token Error:' + err;
+    }else{
+      var query = new Mobile.Query(Push);
+      query.lessThanOrEqualTo('start', new Date());
+      query.equalTo('chrome', undefined);
+      query.find({
+        success: function(pushs) {
+          async.eachSeries(pushs, function (push, cb) {
+            var qToekn = new Live.Query(Chrome_Token);
+                qToekn.equalTo("channel", push.get('type')+'');
+                qToekn.find({
+                  success: function(tokens) {
+                    var count = tokens.length;
+                    if (count < 1) {
+                      console.log('No device: ', push.get('title'), push.get('message'));
+                      push.set('chrome', new Date());
+                      push.save().then(cb, cb);
+                    }else{
+                      console.log('Push start: ', push.get('title'), push.get('message'));
+                      tokens.forEach(function(token){
+                        queue.push({
+                            'access': access,
+                            'token': token.get('token'),
+                            'title': push.get('title'),
+                            'message': push.get('message'),
+                            'link': push.get('link'),
+                          }, function (err, task) {
+                            console.log('completed!', task.token);
+                            count -= 1;
+                            if ( count < 1 ) {
+                              console.log('Push end: ', push.get('title'), push.get('message'));
+                              push.set('chrome', new Date());
+                              push.save().then(cb, cb);
+                            }
+                        });
+                      });
+                    }
+                  },
+                  error: function(error) {
+                    console.log('Get Chrome Token Error: ', error.code, ' ', error.message);
+                    cb();
+                  }
+                });
+          }, function () {
+            process.exit(0);
+          });
+        },
+        error: function(error) {
+            throw "Fetch Push Error: " + error.code + " " + error.message;
+        }
+      });
+    }
+  });
+}
+catch(err) {
+  console.log('ERROR( ' + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' ): ', err);
+}
 
 // // JSON.parse(decodeURIComponent(escape(atob('eyJ0eXBlIjoibGl2ZSIsInVybCI6InVybCIsInRpdGxlIjoi5oiR5oSb5Y+w54GjIn0='))))
