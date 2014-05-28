@@ -22,7 +22,7 @@ try {
         })
       });
       Release.child('notify').set(list, function(){
-        console.log(new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' Push Run! ' + count);
+        console.log(new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' Push Run! ');
         process.exit(0);
       });
     },
