@@ -15,9 +15,9 @@ try {
       var list = [];
       pushs.forEach(function(push){
         list.push({
-          'title': push.get('title'),
-          'message': push.get('message'),
-          'link': push.get('link')
+          'title': push.get('title') || '',
+          'message': push.get('message') || '',
+          'link': push.get('link') || '',
         })
       });
       Release.child('notify').set(list, function(){
