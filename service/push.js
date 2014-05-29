@@ -20,7 +20,6 @@ try {
           'link': push.get('link') || '',
           'datetime': push.get('start').getTime() || '',
         })
-        console.log(push.get('start').getTime());
       });
       Release.child('notify').set(list, function(){
         console.log(new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' Push Run! ');
