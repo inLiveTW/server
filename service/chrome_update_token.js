@@ -3,16 +3,15 @@ var https = require('https'),
 
 var DataBase = require('./class/initial.js');
 var Live = DataBase.Live,
-    Chrome = DataBase.Chrome,
     Mobile = DataBase.Mobile,
     Release = DataBase.Release;
 
-Chrome_Token = Chrome.Object.extend("chrome_token");
+Chrome_Token = Mobile.Object.extend("chrome_token");
 Live_Token = Live.Object.extend("chrome_token");
 
 var token = {};
 var list = [];
-var query = new Chrome.Query(Chrome_Token);
+var query = new Mobile.Query(Chrome_Token);
 var upset = new Live.Query(Live_Token);
 
 var now = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().replace(/\..+/,'');

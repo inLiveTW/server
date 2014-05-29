@@ -110,7 +110,6 @@ try {
                 'error': function(){ cb(); }
               });
             }, cb);
-            cb();
           },
           function(cb){
             async.eachSeries(Object.keys(tokens['ios']), function (uuid, cb) {
