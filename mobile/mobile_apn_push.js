@@ -1,13 +1,17 @@
 var async = require('async');
-var https = require('apn');
+var apn = require('apn');
 
 try {
 
-  var DataBase = require('./class/initial.js');
+  var DataBase = require('../class/initial.js');
+  var Mobile = DataBase.Mobile;
   var Live = DataBase.Live;
 
   var Push = Mobile.Object.extend("push");
   var Ios_Token = Live.Object.extend("ios_token");
+
+  var pwd = process.argv[1];
+  pwd = pwd.substr(0, pwd.lastIndexOf('/'));
 
   var queRequest = async.queue(function (task, cb) {
     // 預設成功與失敗筆數皆為零
@@ -16,14 +20,16 @@ try {
     var completed = null;
 
     var service = new apn.Connection({
-      address: 'gateway.push.apple.com',
-      // gateway: 'gateway.sandbox.push.apple.com',
-      cert: task.key,
-      key: task.key
+      // address: 'gateway.push.apple.com',
+      gateway: 'gateway.sandbox.push.apple.com',
+      cert: '../config/apns_development.pem',
+      key: '../config/apns_development.pem'
     });
 
     service
-    .on('connected', console.error)
+    .on('connected', function() {
+      console.log("APNS Service Connected");
+    })
     .on('timeout', console.error)
     .on('disconnected', console.error)
     .on('socketError', console.error);
@@ -33,7 +39,7 @@ try {
         if ( completed ) {
             clearTimeout(completed);
         }
-        task.succes += 1;
+        task.success += 1;
         completed = setTimeout(function(){
             cb(null, task);
         }, 1000);
@@ -50,9 +56,12 @@ try {
     });
 
     var note = new apn.notification();
-    note.payload = task.message;
 
-    service.pushNotification(note, target);
+    note.expiry = Math.floor(Date.now() / 1000) + 3600;
+    note.alert = "『" + task.title +"』\n" + task.message;
+    note.payload = {'link': task.link};
+
+    service.pushNotification(note, task.token);
   }, 1);
 
 
@@ -124,8 +133,15 @@ try {
         }, function (err, task) {
           console.log('Push end: ', push.get('title'), push.get('message'));
           push.set('ios', new Date());
-          push.save({cb, cb});
-          cb();
+          // push.save(null, {
+          //   success: function() {
+          //     cb();
+          //   },
+          //   error: function(push, error) {
+          //     console.log("Save push error:", error);
+          //     cb();
+          //   }
+          // });
         });
       }, function () {
         process.exit(0);

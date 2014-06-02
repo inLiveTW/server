@@ -1,36 +1,81 @@
+var async = require('async');
+
 try {
 
-  var DataBase = require('./class/initial.js');
+  var DataBase = require('../class/initial.js');
   var Live = DataBase.Live,
       Mobile = DataBase.Mobile,
       Release = DataBase.Release;
 
-  var Push = Mobile.Object.extend("push");
+  var Push4Mobile = Mobile.Object.extend("push");
+  var Push4Live = Live.Object.extend("push");
 
-  var query = new Mobile.Query(Push);
-  query.lessThanOrEqualTo('start', new Date());
-  query.limit(20);
-  query.find({
-    success: function(pushs) {
-      var list = [];
-      pushs.forEach(function(push){
-        list.push({
-          'title': push.get('title') || '',
-          'message': push.get('message') || '',
-          'link': push.get('link') || '',
-          'datetime': push.get('start').getTime() || '',
-        })
-      });
-      Release.child('notify').set(list, function(){
-        console.log(new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' Push Run! ');
-        process.exit(0);
+  async.series([
+    function(cb){
+      var qPush4Mobile = new Mobile.Query(Push4Mobile);
+      qPush4Mobile.find({
+        success: function(pushs) {
+          async.each(pushs, function(item, cb){
+            var push = new Push4Live();
+            push.save({
+              'name': item.get('name') || '',
+              'type': item.get('type') || '',
+              'title': item.get('title') || '',
+              'message': item.get('message') || '',
+              'link': item.get('link') || '',
+              'start': new Date(item.get('start')) || '',
+            }, {
+              success: function(push) {
+                item.destroy({
+                  success: function(push) {
+                    cb();
+                  },
+                  error: function(push, error) {
+                    console.log("Delete push from mobile error: " + error.code + " " + error.message);
+                  }
+                });
+              },
+              error: function(push, error) {
+                console.log("Save push from mobile to live error: " + error.code + " " + error.message);
+                cb();
+              }
+            });
+          }, cb);
+        },
+        error: function(errror) {
+          console.log("Fetch push for mobile error: " + error.code + " " + error.message);
+          cb();
+        }
       });
     },
-    error: function(error) {
-        throw "Fetch Push Error: " + error.code + " " + error.message;
+    function(){
+      var qPush4Live = new Live.Query(Push4Live);
+      qPush4Live.lessThanOrEqualTo('start', new Date());
+      qPush4Live.limit(20);
+      qPush4Live.find({
+        success: function(pushs) {
+          var list = [];
+          pushs.forEach(function(push){
+            list.push({
+              'title': push.get('title') || '',
+              'message': push.get('message') || '',
+              'link': push.get('link') || '',
+              'datetime': push.get('start').getTime() || '',
+            })
+          });
+          Release.child('notify').set(list, function(){
+            console.log(new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' Push Run! ' + list.length);
+            process.exit(0);
+          });
+        },
+        error: function(error) {
+            throw "Fetch Push Error: " + error.code + " " + error.message;
+        }
+      });
     }
+  ], function(){
+    process.exit(0);
   });
-
 }
 catch(err) {
   console.log('ERROR( ' + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' ): ', err);

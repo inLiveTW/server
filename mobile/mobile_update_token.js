@@ -5,7 +5,7 @@ var http = require('http'),
 
 try {
 
-  var DataBase = require('./class/initial.js');
+  var DataBase = require('../class/initial.js');
   var Live    = DataBase.Live,
       Chrome  = DataBase.Chrome,
       Mobile  = DataBase.Mobile,

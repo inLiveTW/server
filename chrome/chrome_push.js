@@ -3,7 +3,7 @@ var https = require('https');
 
 try {
 
-  var DataBase = require('./class/initial.js');
+  var DataBase = require('../class/initial.js');
   var Live = DataBase.Live,
       Mobile = DataBase.Mobile,
       Release = DataBase.Release;

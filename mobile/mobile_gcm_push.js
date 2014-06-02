@@ -3,10 +3,10 @@ var https = require('apn');
 
 try {
 
-  var DataBase = require('./class/initial.js');
+  var DataBase = require('../class/initial.js');
   var Live = DataBase.Live;
 
-  var Push = Mobile.Object.extend("push");
+  var Push = Live.Object.extend("push");
   var Android_Token = Live.Object.extend("android_token");
 
   /**
@@ -17,9 +17,12 @@ try {
     // 預設成功與失敗筆數皆為零
     task.success = 0;
     task.error = 0;
+      console.log(task);
+      console.log(task.token.length);
+      process.exit(0);
 
     try {
-      var sender = new gcm.Sender(task.key);
+      var sender = new gcm.Sender(DataBase.Config.push.android);
 
       var message = new gcm.Message({
         collapseKey: task.type,
@@ -38,16 +41,16 @@ try {
             }else{
               task.success += 1;
             }
-          };
-        });
-        setTimeout(funciton(){
+          }
+        };
+        setTimeout(function(){
           callBack(null, task);
         }, 200);
       });
     }
     catch(err){
       console.error('[GCM] Service send sender err', err);
-      setTimeout(funciton(){
+      setTimeout(function(){
         callBack(null, task);
       }, 200);
     }
@@ -70,7 +73,7 @@ try {
           var que = [];
           tokens.forEach(function(token){
             que.push(token.get('token'));
-            if ( que.length >= 1000 ) {
+            if ( que.length >= 800 ) {
               queRequest.push({
                 'token': que,
                 'title': task.title,
@@ -109,7 +112,7 @@ try {
   /**
    *  取得等待發送的Push Message
    */
-  var qPush = new Mobile.Query(Push);
+  var qPush = new Live.Query(Push);
   // start datetime 必須大於 now
   qPush.lessThanOrEqualTo('start', new Date());
   // android 必須是空白未發送
@@ -125,8 +128,15 @@ try {
         }, function (err, task) {
           console.log('Push end: ', push.get('title'), push.get('message'));
           push.set('android', new Date());
-          push.save({cb, cb});
-          cb();
+          push.save(null, {
+            success: function() {
+              cb();
+            },
+            error: function(push, error) {
+              console.log("Save push error:", error);
+              cb();
+            }
+          });
         });
       }, function () {
         process.exit(0);

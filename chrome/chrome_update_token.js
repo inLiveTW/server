@@ -1,7 +1,7 @@
 var https = require('https'),
     async = require('async');
 
-var DataBase = require('./class/initial.js');
+var DataBase = require('../class/initial.js');
 var Live = DataBase.Live,
     Mobile = DataBase.Mobile,
     Release = DataBase.Release;

@@ -16,6 +16,7 @@
     "node-uuid": "~1.4.1",
     "localStorage": "~1.0.2",
     "xmlhttprequest": "~1.6.0",
-    "rrule": "~2.0.1"
+    "rrule": "~2.0.1",
+    "apn": "~1.5.2"
   }
 }

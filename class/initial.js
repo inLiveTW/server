@@ -84,5 +84,6 @@ module.exports = {
   'Mobile': Mobile,
   'FBgraph': Graph,
   'Release': Release,
-  'getGoogleAccess': getGoogleAccess
+  'getGoogleAccess': getGoogleAccess,
+  'Config': cfg
 };
