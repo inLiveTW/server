@@ -6,11 +6,11 @@ var exec        = require('child_process').exec;
 var pwd = process.argv[1];
 pwd = pwd.substr(0, pwd.lastIndexOf('/'));
 
-if ( !fs.existsSync(pwd + '/database.json') ) {
-    fs.linkSync(pwd + '/database-sample.json', pwd + '/database.json');
+if ( !fs.existsSync(pwd + '/../config/database.json') ) {
+  throw "Can not open database.json";
 }
 
-var cfg = require(pwd + '/database.json');
+var cfg = require(pwd + '/../config/database.json');
 
 var Firebase = require('firebase');
 

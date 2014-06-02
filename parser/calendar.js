@@ -4,7 +4,7 @@ var https = require('https'),
     
 try {
 
-    var DataBase = require('./class/initial.js');
+    var DataBase = require('../class/initial.js');
     var Live = DataBase.Live,
         FBgraph = DataBase.FBgraph,
         Release = DataBase.Release;

@@ -1,34 +1,13 @@
 var http = require('http'),
-    async = require('async'),
-    fs = require('fs'),
-    exec = require('child_process').exec,
-    uuid = require('node-uuid'),
-    time = require('time');
-
-var Live = require('parse').Parse;
-var Firebase = require('firebase');
+    async = require('async');
+    
 try {
 
-  var pwd = process.argv[1];
-  pwd = pwd.substr(0, pwd.lastIndexOf('/'));
-
-  if ( !fs.existsSync(pwd + '/database.json') ) {
-      fs.linkSync(pwd + '/database-sample.json', pwd + '/database.json');
-  }
-
-  var cfg = require(pwd + '/database.json');
-
-  Live.initialize(cfg.live.appid, cfg.live.key, cfg.live.master);
-  Live.Cloud.useMasterKey();
+  var DataBase = require('../class/initial.js');
+  var Live = DataBase.Live;
+  var Release = DataBase.Release;
 
   var Channel = Live.Object.extend("channel");
-
-  var db_firebase = new Firebase(cfg.release.host);
-  db_firebase.auth(cfg.release.token, function(error, result) {
-    if(error) {
-      throw "Login Failed!" + error;
-    }
-  });
 
   var fetch = {
       'youtube': function(id, cb) {
@@ -114,8 +93,6 @@ try {
 
   var query = new Live.Query(Channel);
   var parser = function (cb){
-      now = new time.Date().setTimezone('Asia/Taipei');
-
       query.find({
           success: function(channel) {
               async.map(channel, function(item, cb){
@@ -139,7 +116,7 @@ try {
                           count += 1;
                       });
                   });
-                  db_firebase.child('channel').set(public_channel, function(){
+                  Release.child('channel').set(public_channel, function(){
                     cb && cb(count);
                   });
               });
@@ -151,11 +128,11 @@ try {
   }
 
   parser(function (count) {
-      console.log(new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' Channel Run! ' + count);
+      console.log(new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' Channel Run! ' + count);
       process.exit(0);
   });
 
 }
 catch(err) {
-    console.log('ERROR( ' + new time.Date().setTimezone('Asia/Taipei').toLocaleTimeString() + ' ): ' + err);
+    console.log('ERROR( ' + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' ): ' + err);
 }
