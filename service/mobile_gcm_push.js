@@ -53,6 +53,10 @@ try {
     }
   }, 1);
 
+  /**
+   *  發送 GCM Message
+   *  使用 Queue 機制, 每次只做1個Message, 每次間隔500ms
+   */
   var queMessage = async.queue(function (task, cb) {
     var qToken = new Live.Query(Android_Token);
     qToken.equalTo("channel", task.type + '');
@@ -60,7 +64,7 @@ try {
       success: function (tokens) {
         var count = tokens.length;
         if (count < 1) {
-          console.log('No device: ', push.get('title'), push.get('message'));
+          console.log('No device: ', task.title, task.message);
           cb();
         }else{
           var que = [];
@@ -89,7 +93,9 @@ try {
             'link': task.link,
           }, function (err, task) {
             console.log('Completed! Success:', task.success, ' Error:', task.error, ' Title:', task.title);
-            cb();
+            setTimeout(function () {
+              cb();
+            }, 500);
           });
         }
       },
@@ -135,5 +141,3 @@ try {
 catch(err) {
   console.log('ERROR( ' + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' ): ', err);
 }
-
-// // JSON.parse(decodeURIComponent(escape(atob('eyJ0eXBlIjoibGl2ZSIsInVybCI6InVybCIsInRpdGxlIjoi5oiR5oSb5Y+w54GjIn0='))))
