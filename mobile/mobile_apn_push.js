@@ -67,6 +67,7 @@ try {
   var queMessage = async.queue(function (task, cb) {
     var qToken = new Live.Query(Ios_Token);
     qToken.equalTo("channel", task.type + '');
+    qToken.limit(10000);
     qToken.find({
       success: function (tokens) {
         var count = tokens.length;
