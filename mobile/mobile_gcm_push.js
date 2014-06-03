@@ -1,5 +1,5 @@
 var async = require('async');
-var https = require('apn');
+var gcm = require('node-gcm');
 
 try {
 
@@ -17,16 +17,16 @@ try {
     // 預設成功與失敗筆數皆為零
     task.success = 0;
     task.error = 0;
-      console.log(task);
-      console.log(task.token.length);
-      process.exit(0);
 
     try {
       var sender = new gcm.Sender(DataBase.Config.push.android);
 
       var message = new gcm.Message({
         collapseKey: task.type,
-        data: "『" + task.title + "』\n" +task.message
+        data: {
+          "title": "『" + task.title + "』",
+          "message": task.message,
+        }
       });
 
       // Token 為 Array, 每個token只重試3次
@@ -44,14 +44,14 @@ try {
           }
         };
         setTimeout(function(){
-          callBack(null, task);
+          callback(null, task);
         }, 200);
       });
     }
     catch(err){
       console.error('[GCM] Service send sender err', err);
       setTimeout(function(){
-        callBack(null, task);
+        callback(null, task);
       }, 200);
     }
   }, 1);
@@ -63,6 +63,7 @@ try {
   var queMessage = async.queue(function (task, cb) {
     var qToken = new Live.Query(Android_Token);
     qToken.equalTo("channel", task.type + '');
+    qToken.limit(10000);
     qToken.find({
       success: function (tokens) {
         var count = tokens.length;

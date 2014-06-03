@@ -4,10 +4,9 @@ var apn = require('apn');
 try {
 
   var DataBase = require('../class/initial.js');
-  var Mobile = DataBase.Mobile;
   var Live = DataBase.Live;
 
-  var Push = Mobile.Object.extend("push");
+  var Push = Live.Object.extend("push");
   var Ios_Token = Live.Object.extend("ios_token");
 
   var pwd = process.argv[1];
@@ -20,10 +19,10 @@ try {
     var completed = null;
 
     var service = new apn.Connection({
-      // address: 'gateway.push.apple.com',
-      gateway: 'gateway.sandbox.push.apple.com',
-      cert: '../config/apns_development.pem',
-      key: '../config/apns_development.pem'
+      address: 'gateway.push.apple.com',
+      // gateway: 'gateway.sandbox.push.apple.com',
+      cert: '../config/apns_production.pem',
+      key: '../config/apns_production.pem'
     });
 
     service
@@ -117,7 +116,7 @@ try {
   /**
    *  取得等待發送的Push Message
    */
-  var qPush = new Mobile.Query(Push);
+  var qPush = new Live.Query(Push);
   // start datetime 必須大於 now
   qPush.lessThanOrEqualTo('start', new Date());
   // android 必須是空白未發送
@@ -133,15 +132,15 @@ try {
         }, function (err, task) {
           console.log('Push end: ', push.get('title'), push.get('message'));
           push.set('ios', new Date());
-          // push.save(null, {
-          //   success: function() {
-          //     cb();
-          //   },
-          //   error: function(push, error) {
-          //     console.log("Save push error:", error);
-          //     cb();
-          //   }
-          // });
+          push.save(null, {
+            success: function() {
+              cb();
+            },
+            error: function(push, error) {
+              console.log("Save push error:", error);
+              cb();
+            }
+          });
         });
       }, function () {
         process.exit(0);

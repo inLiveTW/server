@@ -6,10 +6,9 @@ var http = require('http'),
 try {
 
   var DataBase = require('../class/initial.js');
-  var Live    = DataBase.Live,
-      Chrome  = DataBase.Chrome,
-      Mobile  = DataBase.Mobile,
-      Release = DataBase.Release;
+  var Live    = DataBase.Live;
+  var Mobile  = DataBase.Mobile;
+  var Release = DataBase.Release;
 
   var MobileToken  = Mobile.Object.extend("mobile_token");
   var Token = {
