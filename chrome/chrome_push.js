@@ -4,9 +4,8 @@ var https = require('https');
 try {
 
   var DataBase = require('../class/initial.js');
-  var Live = DataBase.Live,
-      Mobile = DataBase.Mobile,
-      Release = DataBase.Release;
+  var Live = DataBase.Live;
+  var Release = DataBase.Release;
 
   var Push = Mobile.Object.extend("push");
   var Chrome_Token = Live.Object.extend("chrome_token");
