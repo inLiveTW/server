@@ -7,7 +7,7 @@ try {
   var Live = DataBase.Live;
   var Release = DataBase.Release;
 
-  var Push = Mobile.Object.extend("push");
+  var Push = Live.Object.extend("push");
   var Chrome_Token = Live.Object.extend("chrome_token");
 
   var sendNotify = function(task, cb) {
@@ -60,7 +60,7 @@ try {
     if (err) {
       throw 'Get Access Token Error:' + err;
     }else{
-      var query = new Mobile.Query(Push);
+      var query = new Live.Query(Push);
       query.lessThanOrEqualTo('start', new Date());
       query.equalTo('chrome', undefined);
       query.find({
