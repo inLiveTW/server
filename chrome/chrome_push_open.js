@@ -49,11 +49,6 @@ try {
     request.end();
   }
 
-  var queue = async.queue(function (task, callback) {
-    sendNotify(task, callback);
-  }, 10);
-
-
   DataBase.getGoogleAccess(function(err, access){
     if (err) {
       throw 'Get Access Token Error:' + err;
@@ -74,6 +69,7 @@ try {
               error: cb
             });
           }, function () {
+            var queue = [];
             var qToken = new Live.Query(Chrome_Token);
             qToken.limit(10000);
             qToken.find({
@@ -83,13 +79,25 @@ try {
                   console.log('No device for push open:', count);
                 }else{
                   console.log('Push start for open:', count, 'device:', len);
-                  async.each(tokens, function(token, cb) {
-                    queue.push({
-                      'access': access,
-                      'token': token.get('token'),
-                      'count': count
-                    }, function (err, task) {
-                      console.log('completed!', task.token);
+                  for (var i=0, len=tokens.length; i<len; i+=10) {
+                    var que = [];
+                    for (var j=0; j<10; j++) {
+                      tokens[i+j] && que.push(tokens[i+j].get('token'));
+                    }
+                    queue.push(que);
+                  };
+
+                  async.eachSeries(queue, function(tokens, cb) {
+                    async.each(tokens, function(token, cb) {
+                      sendNotify({
+                        'access': access,
+                        'token': token,
+                        'count': count
+                      }, function (err, task) {
+                        console.log('completed!', task.token);
+                        cb();
+                      });
+                    }, function () {
                       cb();
                     });
                   }, function () {
