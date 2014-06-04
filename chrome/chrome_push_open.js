@@ -78,7 +78,7 @@ try {
                 if (len < 1) {
                   console.log('No device for push open: ', count);
                 }else{
-                  console.log('Push start for open: ', count);
+                  console.log('Push start for open: ', count, 'device:', len);
                   async.eachSeries(tokens, function(token, cb) {
                     sendNotify({
                         'access': access,
