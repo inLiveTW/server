@@ -70,7 +70,7 @@ try {
               error: cb
             });
           }, function () {
-            var qToekn = new Live.Query(Chrome_Token);
+            var qToken = new Live.Query(Chrome_Token);
             qToken.limit(10000);
             qToekn.find({
               success: function(tokens) {
