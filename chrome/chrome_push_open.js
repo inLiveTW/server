@@ -51,7 +51,7 @@ try {
 
   var queue = async.queue(function (task, callback) {
     sendNotify(task, callback);
-  }, 5);
+  }, 10);
 
 
   DataBase.getGoogleAccess(function(err, access){
