@@ -6,14 +6,13 @@ var http = require('http'),
 try {
 
   var DataBase = require('../class/initial.js');
-  var Live = DataBase.Live,
-      Chrome = DataBase.Chrome,
-      Mobile = DataBase.Mobile,
-      Release = DataBase.Release;
+  var Live = DataBase.Live;
+  var Mobile = DataBase.Mobile;
+  var Release = DataBase.Release;
 
   var Channel = Live.Object.extend("channel");
+  var Open = Live.Object.extend("open");
   var Live_Location = Live.Object.extend("live_location");
-  var Chrome_Location = Chrome.Object.extend("live_location");
   var Mobile_Location = Mobile.Object.extend("live_location");
 
   var fetch = {
@@ -123,6 +122,7 @@ try {
       query.find({
           success: function(channel) {
               async.parallel({
+                  // 取得使用者回饋的位置資訊
                   'mobile_location': function(cb){
                     var temp = {};
                     var query = new Mobile.Query(Mobile_Location);
@@ -146,29 +146,7 @@ try {
                       }
                     });
                   },
-                  'chrome_location': function(cb){
-                    var temp = {};
-                    var query = new Chrome.Query(Chrome_Location);
-                    query.find({
-                      success: function(results) {
-                        async.each(results, function(obj, cb){
-                          if ( ! temp[obj.get('vuid')] ) {
-                            temp[obj.get('vuid')] = {};
-                          }
-                          temp[obj.get('vuid')][obj.get('location')] = (temp[obj.get('vuid')][obj.get('location')] || 0) + 1;
-                          obj.destroy({
-                            'success': function(){ cb(); },
-                            'error': function(){ cb(); }
-                          });
-                        }, function(){
-                          cb && cb(null, temp);
-                        });
-                      },
-                      error: function(error) {
-                        console.log("Fetch Chrome Location Error: " + error.code + " " + error.message);
-                      }
-                    });
-                  },
+                  // 取得已知的直播清單
                   'database': function(cb){
                       Release.child('live').once('value', function(live) {
                           var db = live.val();
@@ -179,6 +157,7 @@ try {
                           cb(null, db || {});
                       })
                   },
+                  // 掃描正在直播的清單
                   'live': function(cb){
                       async.map(channel, function(item, cb){
                           if ( fetch[item.attributes.type] ) {
@@ -191,89 +170,105 @@ try {
                       });
                   }
               }, function (err, results) {
-                  var count = 0;
-                  var updated_at = Math.floor(Date.now() / 1000);
-                  var live = results['database'] || {};
-                  var new_live = [];
+                // 初始統計筆數
+                var count = 0;
+                // 資料更新的日期
+                var updated_at = Math.floor(Date.now() / 1000);
 
-                  results['live'].forEach(function(source, index){
-                      source.forEach(function(active){
-                          if ( !live[active.vid] ) {
-                              live[active.vid] = {
-                                  'vuid': uuid.v4()
-                              };
-                              new_live.push(active);
-                          }
-                          for (key in active) {
-                              live[active.vid][key] = active[key];
-                          }
-                          live[active.vid]['logo'] = active.thumb || channel[index].attributes.logo;
-                          live[active.vid]['status'] = 'live';
-                          live[active.vid].updated_at = updated_at;
-                          count += 1;
-                      });
+                /**
+                 *  更新直播清單
+                 */
+
+                // 已知清單
+                var live = results['database'] || {};
+                // 掃描到的清單
+                var liveScan = results['live'];
+                // 新的清單
+                var liveNew = [];
+
+                liveScan.forEach(function(src, index){
+                  src.forEach(function(active){
+                    // 新增新的直播
+                    if ( !live[active.vid] ) {
+                        live[active.vid] = {
+                            'vuid': uuid.v4()
+                        };
+                        liveNew.push(live[active.vid]);
+                    }
+                    // 更新直播屬性
+                    for (key in active) {
+                        live[active.vid][key] = active[key];
+                    }
+                    live[active.vid]['logo'] = active.thumb || channel[index].get('logo');
+                    live[active.vid]['status'] = 'live';
+                    live[active.vid].updated_at = updated_at;
+                    // 增加筆數
+                    count += 1;
                   });
+                });
 
-                  for (key in live)
-                  {
-                      if ( (live[key].updated_at + 15 * 60) < updated_at ) {
-                          delete live[key];
-                      }
-                  }
+                // 刪除已過期或停播的清單
+                for (key in live)
+                {
+                    if ( (live[key].updated_at + 15 * 60) < updated_at ) {
+                        delete live[key];
+                    }
+                }
 
-                  async.each(Object.keys(live), function(key, cb){
-                    var vuid = live[key]['vuid'];
+                /**
+                 *  更新直播位置
+                 */
+                async.each(Object.keys(live), function(key, cb){
+                  var vuid = live[key]['vuid'];
 
-                    async.waterfall([
-                      function (cb) {
-                        var query = new Live.Query(Live_Location);
-                        query.equalTo("vuid", vuid);
+                  async.waterfall([
+                    // 取得已知的位置
+                    function (cb) {
+                      var qLocation = new Live.Query(Live_Location);
+                      qLocation.equalTo("vuid", vuid);
 
-                        query.first({
-                          success: function(object) {
-                            if ( object ) {
-                              cb(true, object);
-                            }else{
-                              cb(null);
-                            }
-                          },
-                          error: function(error) {
-                            console.log("Location by vuid Error: " + error.code + " " + error.message);
+                      qLocation.first({
+                        success: function(object) {
+                          if ( object ) {
+                            cb(true, object);
+                          }else{
                             cb(null);
                           }
-                        });
-                      },
-                      function (cb) {
-                        var object = new Live_Location();
+                        },
+                        error: function(error) {
+                          console.log("Location by vuid Error: " + error.code + " " + error.message);
+                          cb(null);
+                        }
+                      });
+                    },
+                    // 建立新的位置
+                    function (cb) {
+                      var object = new Live_Location();
 
-                        var query = new Live.Query(Live_Location);
-                        query.equalTo("name", (live[key]['type']=='youtube' ? 'y_' : 'u_')+live[key]['vid']);
+                      // 參考之前位置
+                      var query = new Live.Query(Live_Location);
+                      query.equalTo("name", (live[key]['type']=='youtube' ? 'y_' : 'u_')+live[key]['vid']);
 
-                        query.first({
-                          success: function(parent) {
+                      query.first({
+                        success: function(parent) {
+                          if ( parent ) {
+                            parent = getHighest(parent.get('location'));
                             if ( parent ) {
-                              parent = getHighest(parent.get('location'));
-                              if ( parent ) {
-                                var location = {};
-                                location[parent] = 1;
-                                object.set('location', location);
-                              }
+                              var location = {};
+                              location[parent] = 1;
+                              object.set('location', location);
                             }
-                            cb(null, object);
-                          },
-                          error: function(error) {
-                            console.log("Location by name Error: " + error.code + " " + error.message);
-                            cb(null, object);
                           }
-                        });
-                      }
-                    ], function (err, object) {
+                          cb(null, object);
+                        },
+                        error: function(error) {
+                          console.log("Location by name Error: " + error.code + " " + error.message);
+                          cb(null, object);
+                        }
+                      });
+                    }], function (err, object) {
                       
                       var location = object.get('location') || {};
-
-                      for (name in results['chrome_location'][vuid]){
-                        location[name] = (location[name] || 0) + results['chrome_location'][vuid][name];
-                      }
 
                       for (name in results['mobile_location'][vuid]){
                         location[name] = (location[name] || 0) + results['mobile_location'][vuid][name];
@@ -292,7 +287,18 @@ try {
                     });
                   }, function(){
                     Release.child('live').set(live, function(){
-                      cb && cb(count);
+                      async.each(liveNew, function(active, cb){
+                        var open = new Open();
+                        open.set('title', active.title);
+                        open.set('url', active.url);
+                        open.set('vuid', active.vuid);
+                        open.save(null, {
+                          'success': function(){ cb && cb(); },
+                          'error': function(){ cb && cb(); }
+                        })
+                      }, function () {
+                        cb && cb(count);
+                      });
                     });
                   });
               });

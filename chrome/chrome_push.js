@@ -5,7 +5,6 @@ try {
 
   var DataBase = require('../class/initial.js');
   var Live = DataBase.Live;
-  var Release = DataBase.Release;
 
   var Push = Live.Object.extend("push");
   var Chrome_Token = Live.Object.extend("chrome_token");
@@ -17,7 +16,7 @@ try {
       'channelId': token,
       'subchannelId': '0',
       'payload': new Buffer(JSON.stringify({
-        'type': 'message',
+        'type': task.type || 'message',
         'link': task.link || '',
         'title': task.title || '',
         'message': (task.message || '') + "\n- " + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'')
@@ -85,6 +84,7 @@ try {
                             'title': push.get('title'),
                             'message': push.get('message'),
                             'link': push.get('link'),
+                            'type': push.get('type')
                           }, function (err, task) {
                             console.log('completed!', task.token);
                             count -= 1;
