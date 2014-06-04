@@ -72,7 +72,7 @@ try {
           }, function () {
             var qToken = new Live.Query(Chrome_Token);
             qToken.limit(10000);
-            qToekn.find({
+            qToken.find({
               success: function(tokens) {
                 var count = tokens.length;
                 if (count < 1) {
