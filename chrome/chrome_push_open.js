@@ -74,8 +74,8 @@ try {
             qToken.limit(10000);
             qToken.find({
               success: function(tokens) {
-                var count = tokens.length;
-                if (count < 1) {
+                var len = tokens.length;
+                if (len < 1) {
                   console.log('No device for push open: ', count);
                 }else{
                   console.log('Push start for open: ', count);
@@ -84,7 +84,8 @@ try {
                         'access': access,
                         'token': token.get('token'),
                         'count': count
-                    },function(){
+                    },function(e, task){
+                      console.log('completed!', task.token);
                       cb();
                     });
                   }, function () {
