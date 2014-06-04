@@ -49,6 +49,10 @@ try {
     request.end();
   }
 
+  var queue = async.queue(function (task, callback) {
+    sendNotify(task, callback);
+  }, 5);
+
 
   DataBase.getGoogleAccess(function(err, access){
     if (err) {
@@ -76,15 +80,15 @@ try {
               success: function(tokens) {
                 var len = tokens.length;
                 if (len < 1) {
-                  console.log('No device for push open: ', count);
+                  console.log('No device for push open:', count);
                 }else{
-                  console.log('Push start for open: ', count, 'device:', len);
-                  async.eachSeries(tokens, function(token, cb) {
-                    sendNotify({
-                        'access': access,
-                        'token': token.get('token'),
-                        'count': count
-                    },function(e, task){
+                  console.log('Push start for open:', count, 'device:', len);
+                  async.each(tokens, function(token, cb) {
+                    queue.push({
+                      'access': access,
+                      'token': token.get('token'),
+                      'count': count
+                    }, function (err, task) {
                       console.log('completed!', task.token);
                       cb();
                     });
