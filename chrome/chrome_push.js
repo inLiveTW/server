@@ -65,10 +65,10 @@ try {
       query.find({
         success: function(pushs) {
           async.eachSeries(pushs, function (push, cb) {
-            var qToekn = new Live.Query(Chrome_Token);
-                qToekn.equalTo("channel", push.get('type')+'');
+            var qToken = new Live.Query(Chrome_Token);
+                qToken.equalTo("channel", push.get('type')+'');
                 qToken.limit(10000);
-                qToekn.find({
+                qToken.find({
                   success: function(tokens) {
                     var count = tokens.length;
                     if (count < 1) {
