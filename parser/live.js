@@ -2,6 +2,7 @@ var http = require('http');
 var async = require('async');
 var uuid = require('node-uuid');
 var time = require('time');
+var exec = require('child_process').exec;
 var GSpreadsheet = require('gspreadsheet');
 
 try {
@@ -29,6 +30,7 @@ try {
             res.on('end', function() {
               body = JSON.parse(body);
               if (body.feed.entry) {
+                  // youtube-dl --get-url VTPUaMojM1o
                   for (var i = 0, len = body.feed.entry.length; i < len; i++) {
                       var vid = /videos\/([\w-_]+)/.exec(body.feed.entry[i].content.src)[1];
                       active.push({
@@ -65,7 +67,6 @@ try {
                           title: channel.title,
                           cid: id,
                           vid: 'u_' + channel.id,
-                          stream: 'http://iphone-streaming.ustream.tv/uhls/' + channel.id + '/streams/live/iphone/playlist.m3u8'
                           user: id,
                           url: 'http://www.ustream.tv/channel/' + channel.id,
                           embed: 'http://www.ustream.tv/embed/' + channel.id + '?wmode=direct&autoplay=true',
@@ -192,77 +193,109 @@ try {
             }
         }
 
-        /**
-         *  更新直播位置
-         */
-        async.each(Object.keys(live), function(key, cb){
-          var vuid = live[key]['vuid'];
+        async.parallel([
+          function (cb) {
+            /**
+             *  更新直播位置
+             */
+            async.each(Object.keys(live), function(key, cb){
+              var vuid = live[key]['vuid'];
 
-          async.waterfall([
-            // 取得已知的位置
-            function (cb) {
-              var qLocation = new Live.Query(Live_Location);
-              qLocation.equalTo("vuid", vuid);
+              async.waterfall([
+                // 取得已知的位置
+                function (cb) {
+                  var qLocation = new Live.Query(Live_Location);
+                  qLocation.equalTo("vuid", vuid);
 
-              qLocation.first({
-                success: function(object) {
-                  if ( object ) {
-                    cb(true, object);
-                  }else{
-                    cb(null);
-                  }
-                },
-                error: function(error) {
-                  console.log("Location by vuid Error: " + error.code + " " + error.message);
-                  cb(null);
-                }
-              });
-            },
-            // 建立新的位置
-            function (cb) {
-              var object = new Live_Location();
-
-              // 參考之前位置
-              var query = new Live.Query(Live_Location);
-              query.equalTo("name", (live[key]['type']=='youtube' ? 'y_' : 'u_')+live[key]['vid']);
-
-              query.first({
-                success: function(parent) {
-                  if ( parent ) {
-                    parent = getHighest(parent.get('location'));
-                    if ( parent ) {
-                      var location = {};
-                      location[parent] = 1;
-                      object.set('location', location);
+                  qLocation.first({
+                    success: function(object) {
+                      if ( object ) {
+                        cb(true, object);
+                      }else{
+                        cb(null);
+                      }
+                    },
+                    error: function(error) {
+                      console.log("Location by vuid Error: " + error.code + " " + error.message);
+                      cb(null);
                     }
-                  }
-                  cb(null, object);
+                  });
                 },
-                error: function(error) {
-                  console.log("Location by name Error: " + error.code + " " + error.message);
-                  cb(null, object);
-                }
-              });
-            }], function (err, object) {
-              
-              var location = object.get('location') || {};
+                // 建立新的位置
+                function (cb) {
+                  var object = new Live_Location();
 
-              for (name in results['location'][vuid]){
-                location[name] = (location[name] || 0) + results['location'][vuid][name];
+                  // 參考之前位置
+                  var query = new Live.Query(Live_Location);
+                  query.equalTo("name", (live[key]['type']=='youtube' ? 'y_' : 'u_')+live[key]['vid']);
+
+                  query.first({
+                    success: function(parent) {
+                      if ( parent ) {
+                        parent = getHighest(parent.get('location'));
+                        if ( parent ) {
+                          var location = {};
+                          location[parent] = 1;
+                          object.set('location', location);
+                        }
+                      }
+                      cb(null, object);
+                    },
+                    error: function(error) {
+                      console.log("Location by name Error: " + error.code + " " + error.message);
+                      cb(null, object);
+                    }
+                  });
+                }], function (err, object) {
+                  
+                  var location = object.get('location') || {};
+
+                  for (name in results['location'][vuid]){
+                    location[name] = (location[name] || 0) + results['location'][vuid][name];
+                  }
+
+                  object.set('vuid', vuid);
+                  object.set('name', (live[key]['type']=='youtube' ? 'y_' : 'u_')+live[key]['vid']);
+                  object.set('location', location);
+
+                  live[key]['location'] = getHighest(location);
+
+                  object.save(null, {
+                    'success': function(){ cb && cb(); },
+                    'error': function(){ cb && cb(); }
+                  });
+                });
+              }, cb);
+          },
+          function (cb) {
+            async.each(Object.keys(live), function(key, cb){
+              /**
+               *  Get Stream URL
+               */
+              var video = live[key];
+
+              if (!video['stream']) {
+                switch(video['type']){
+                  case 'youtube':
+                    exec('youtube-dl --get-url ' + video['vid'].replace(/^y_/i,''), function (error, stream) {
+                      video['stream'] = stream;
+                      cb();
+                    });
+                    break;
+                  case 'ustream':
+                    video['stream'] = 'http://iphone-streaming.ustream.tv/uhls/' + video['id'] + '/streams/live/iphone/playlist.m3u8';
+                    cb();
+                    break;
+                  default:
+                    cb();
+                };
+              }else{
+                cb();
               }
 
-              object.set('vuid', vuid);
-              object.set('name', (live[key]['type']=='youtube' ? 'y_' : 'u_')+live[key]['vid']);
-              object.set('location', location);
-
-              live[key]['location'] = getHighest(location);
-
-              object.save(null, {
-                'success': function(){ cb && cb(); },
-                'error': function(){ cb && cb(); }
-              });
-            });
-          }, function(){
+            }, cb);
+          }
+        ], function(){
             Release.child('live').set(live, function(){
               async.each(liveNew, function(active, cb){
                 var open = new Open();
