@@ -181,16 +181,17 @@ try {
             live[active.vid]['status'] = 'live';
             live[active.vid].updated_at = updated_at;
             // 增加筆數
-            count += 1;
           });
         });
 
         // 刪除已過期或停播的清單
         for (key in live)
         {
-            if ( (live[key].updated_at + 15 * 60) < updated_at ) {
-                delete live[key];
-            }
+          if ( (live[key].updated_at + 15 * 60) < updated_at ) {
+            delete live[key];
+          }else{
+            count += 1;
+          }
         }
 
         async.parallel([
