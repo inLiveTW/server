@@ -283,7 +283,7 @@ try {
                     });
                     break;
                   case 'ustream':
-                    video['stream'] = 'http://iphone-streaming.ustream.tv/uhls/' + video['id'] + '/streams/live/iphone/playlist.m3u8';
+                    video['stream'] = 'http://iphone-streaming.ustream.tv/uhls/' + video['vid'].replace(/^u_/i,'') + '/streams/live/iphone/playlist.m3u8';
                     cb();
                     break;
                   default:
