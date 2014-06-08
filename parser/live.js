@@ -65,6 +65,7 @@ try {
                           title: channel.title,
                           cid: id,
                           vid: 'u_' + channel.id,
+                          stream: 'http://iphone-streaming.ustream.tv/uhls/' + channel.id + '/streams/live/iphone/playlist.m3u8'
                           user: id,
                           url: 'http://www.ustream.tv/channel/' + channel.id,
                           embed: 'http://www.ustream.tv/embed/' + channel.id + '?wmode=direct&autoplay=true',
