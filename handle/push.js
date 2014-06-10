@@ -10,6 +10,12 @@ try {
   var Push4Mobile = Mobile.Object.extend("push");
   var Push4Live = Live.Object.extend("push");
 
+  var push_type = {
+    'message': '即時訊息',
+    'event': '事件提醒',
+    'reporter': '公民記者',
+  }
+
   async.series([
     function(cb){
       var qPush4Mobile = new Mobile.Query(Push4Mobile);
@@ -20,7 +26,6 @@ try {
             push.save({
               'name': item.get('name') || '',
               'type': item.get('type') || '',
-              'title': item.get('title') || '',
               'message': item.get('message') || '',
               'link': item.get('link') || '',
               'start': new Date(item.get('start')) || '',
@@ -57,12 +62,18 @@ try {
           var list = [];
           pushs.forEach(function(push){
             list.push({
-              'title': push.get('title') || '',
+              'title': '『' + (push_type[push.get('type')] || '其他通知') + '』',
               'message': push.get('message') || '',
+              'name': push.get('name'),
               'link': push.get('link') || '',
               'datetime': push.get('start').getTime() || '',
             })
           });
+
+          list.sort(function(x,y){
+            return ( x.datetime < y.datetime) ? 1 : -1;
+          });
+
           Release.child('notify').set(list, function(){
             console.log(new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' Push Run! ' + list.length);
             process.exit(0);
