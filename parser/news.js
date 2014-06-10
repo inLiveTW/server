@@ -78,7 +78,6 @@ try {
           results.forEach(function(item){
             data[item.id] = item;
           });
-          console.log(data);
           Release.child('news').set(data, function(err){
             cb && cb();
           });
