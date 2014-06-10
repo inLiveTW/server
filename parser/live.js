@@ -11,6 +11,17 @@ var radix62 = [
   'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
 ]
 
+var color = {
+  '1': '16A085',
+  '認證': '27AE60',
+  '攝護線': '2980B9',
+  '2': '8E44AD',
+  '3': 'F39C12',
+  'NGO': 'D35400',
+  '4': 'C0392B',
+  'other': '2C3E50',
+}
+
 try {
 
   var gspreadsheet = new GSpreadsheet('1LN0qN4NmaRYByW-VMywEneVYovCIt8ExpinZRhJDuKw', '0');
@@ -182,6 +193,7 @@ try {
         var liveNew = [];
 
         liveScan.forEach(function(src, index){
+          var cnote = channel[index].content;
           src.forEach(function(active){
             // 新增新的直播
             if ( !live[active.vid] ) {
@@ -194,7 +206,12 @@ try {
             for (key in active) {
                 live[active.vid][key] = active[key];
             }
-            live[active.vid]['logo'] = active.thumb || channel[index].content.logo;
+            live[active.vid]['logo'] = active.thumb || cnote.logo;
+            live[active.vid]['tag'] = {};
+            tags = (cnote.tag || '').split(",");
+            tags.length && tags[0] && tags.forEach(function(tag){
+              live[active.vid]['tag'][tag] = color[tag] || color['other'];
+            });
             live[active.vid]['status'] = 'live';
             live[active.vid].updated_at = updated_at;
             // 增加筆數
