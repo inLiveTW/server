@@ -5,6 +5,12 @@ var time = require('time');
 var exec = require('child_process').exec;
 var GSpreadsheet = require('gspreadsheet');
 
+var radix62 = [
+  '0','1','2','3','4','5','6','7','8','9',
+  'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+  'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+]
+
 try {
 
   var gspreadsheet = new GSpreadsheet('1LN0qN4NmaRYByW-VMywEneVYovCIt8ExpinZRhJDuKw', '0');
@@ -18,6 +24,15 @@ try {
   var Open = Live.Object.extend("open");
   var Live_Location = Live.Object.extend("live_location");
   var Mobile_Location = Mobile.Object.extend("live_location");
+
+  var parse62 = function(num){
+    var remain = num % 62;
+    if ( num <= 0 ) {
+      return '';
+    }else{
+      return parse62( (num-remain) / 62 ) + radix62[remain];
+    }
+  }
 
   var fetch = {
       'youtube': function(id, cb) {
@@ -40,7 +55,8 @@ try {
                           vid: 'y_' + vid,
                           user: id,
                           url: 'http://youtu.be/' + vid,
-                          embed: 'http://www.youtube.com/embed/' + vid + '?autoplay=1'
+                          embed: 'http://www.youtube.com/embed/' + vid + '?autoplay=1',
+                          shorten: 'http://youtu.be/' + vid,
                       });
                   };
               }
@@ -70,7 +86,8 @@ try {
                           user: id,
                           url: 'http://www.ustream.tv/channel/' + channel.id,
                           embed: 'http://www.ustream.tv/embed/' + channel.id + '?wmode=direct&autoplay=true',
-                          thumb: channel.imageUrl.small
+                          thumb: channel.imageUrl.small,
+                          shorten: 'http://ustre.am/' + parse62(channel.id),
                       });
                   }
               });
