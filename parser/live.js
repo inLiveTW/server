@@ -221,7 +221,7 @@ try {
         // 刪除已過期或停播的清單
         for (key in live)
         {
-          if ( (live[key].updated_at + 15 * 60) < updated_at ) {
+          if ( (live[key].updated_at + 5 * 60) < updated_at ) {
             delete live[key];
           }else{
             count += 1;
