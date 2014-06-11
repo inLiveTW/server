@@ -9,6 +9,13 @@ try {
   var Push = Live.Object.extend("push");
   var Android_Token = Live.Object.extend("android_token");
 
+  var push_type = {
+    'message': '即時訊息',
+    'event': '事件提醒',
+    'reporter': '公民記者',
+    'live': '節目開播',
+  }
+
   /**
    *  發送 GCM Request
    *  使用 Queue 機制, 每次只做1個Request, 每次間隔200ms
@@ -24,7 +31,7 @@ try {
       var message = new gcm.Message({
         collapseKey: task.type,
         data: {
-          "title": "『" + task.title + "』",
+          "title": task.title,
           "message": task.message,
         }
       });
@@ -91,7 +98,7 @@ try {
 
           queRequest.push({
             'token': que,
-            'title': task.title,
+            'title': '『' + (push_type[task.type] || '其他通知') + '』',
             'type': task.type,
             'message': task.message,
             'link': task.link,
