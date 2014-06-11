@@ -9,6 +9,13 @@ try {
   var Push = Live.Object.extend("push");
   var Chrome_Token = Live.Object.extend("chrome_token");
 
+  var push_type = {
+    'message': '即時訊息',
+    'event': '事件提醒',
+    'reporter': '公民記者',
+    'live': '節目開播',
+  }
+
   var sendNotify = function(task, cb) {
     var access = task.access;
     var token = task.token;
@@ -18,8 +25,8 @@ try {
       'payload': new Buffer(JSON.stringify({
         'type': task.type || 'message',
         'link': task.link || '',
-        'title': task.title || '',
-        'message': (task.message || '') + "\n- " + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'')
+        'title': '『' + (push_type[task.type] || '其他通知') + '』',
+        'message': (task.message || '') + "\n- " + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' ' + task.name
       })).toString('base64')
     });
 
@@ -51,9 +58,7 @@ try {
     request.end();
   }
 
-  var queue = async.queue(function (task, callback) {
-    sendNotify(task, callback);
-  }, 5);
+  var queue = [];
 
   DataBase.getGoogleAccess(function(err, access){
     if (err) {
@@ -72,28 +77,39 @@ try {
                   success: function(tokens) {
                     var count = tokens.length;
                     if (count < 1) {
-                      console.log('No device: ', push.get('title'), push.get('message'));
+                      console.log('No device: ', push.get('message'));
                       push.set('chrome', new Date());
                       push.save().then(cb, cb);
                     }else{
-                      console.log('Push start: ', push.get('title'), push.get('message'));
-                      tokens.forEach(function(token){
-                        queue.push({
+                      console.log('Push start: ', push.get('message'), 'device:', count);
+
+                      for (var i=0; i<count; i+=10) {
+                        var que = [];
+                        for (var j=0; j<10; j++) {
+                          tokens[i+j] && que.push(tokens[i+j].get('token'));
+                        }
+                        queue.push(que);
+                      };
+
+                      async.eachSeries(queue, function(tokens, cb) {
+                        async.each(tokens, function(token, cb) {
+                          sendNotify({
                             'access': access,
-                            'token': token.get('token'),
-                            'title': push.get('title'),
+                            'token': token,
+                            'name': push.get('name'),
                             'message': push.get('message'),
                             'link': push.get('link'),
                             'type': push.get('type')
                           }, function (err, task) {
                             console.log('completed!', task.token);
-                            count -= 1;
-                            if ( count < 1 ) {
-                              console.log('Push end: ', push.get('title'), push.get('message'));
-                              push.set('chrome', new Date());
-                              push.save().then(cb, cb);
-                            }
+                            cb();
+                          });
+                        }, function () {
+                          cb();
                         });
+                      }, function () {
+                        console.log('Push end: ', push.get('message'));
+                        cb();
                       });
                     }
                   },
