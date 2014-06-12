@@ -20,7 +20,7 @@ try {
    *  發送 GCM Request
    *  使用 Queue 機制, 每次只做1個Request, 每次間隔200ms
    */
-  var queRequest = async.queue(function (task, callback) {
+  var queRequest = function (task, callback) {
     // 預設成功與失敗筆數皆為零
     task.success = 0;
     task.error = 0;
@@ -61,13 +61,13 @@ try {
         callback(null, task);
       }, 200);
     }
-  }, 1);
+  };
 
   /**
    *  發送 GCM Message
    *  使用 Queue 機制, 每次只做1個Message, 每次間隔500ms
    */
-  var queMessage = async.queue(function (task, cb) {
+  var queMessage = function (task, cb) {
     var qToken = new Live.Query(Android_Token);
     qToken.equalTo("channel", task.type + '');
     qToken.limit(10000);
@@ -78,6 +78,7 @@ try {
           console.log('No device: ', task.title, task.message);
           cb();
         }else{
+          var queue = [];
           for (var i=0, len=tokens.length; i<len; i+=800) {
             var que = [];
             for (var j=0; j<800; j++){
@@ -87,38 +88,21 @@ try {
                 break;                
               }
             }
-            queRequest.push(que);
+            queue.push(que);
           }
 
-          tokens.forEach(function(token){
-            que.push(token.get('token'));
-            if ( que.length >= 800 ) {
-              queRequest.push({
-                'token': que,
-                'title': task.title,
-                'type': task.type,
-                'message': task.message,
-                'link': task.link,
-              }, function (err, task) {
-                console.log('Completed! Success:', task.success, 'Error:', task.error, 'Type:', task.type, 'Title:', task.title);
-              });
-              que = [];
-            }
-          });
-          tokens = undefined;
-
-          queRequest.push({
-            'token': que,
-            'title': '『' + (push_type[task.type] || '其他通知') + '』',
-            'type': task.type,
-            'message': task.message,
-            'link': task.link,
-          }, function (err, task) {
-            console.log('Completed! Success:', task.success, 'Error:', task.error, 'Type:', task.type, 'Title:', task.title);
-            setTimeout(function () {
+          async.eachSeries(queue, function (que, cb) {
+            queRequest({
+              'token': que,
+              'title': '『' + (push_type[task.type] || '其他通知') + '』',
+              'type': task.type,
+              'message': task.message,
+              'link': task.link,
+            }, function (err, task) {
+              console.log('Completed! Success:', task.success, 'Error:', task.error, 'Type:', task.type, 'Title:', task.title);
               cb();
-            }, 500);
-          });
+            });
+          }, cb);
         }
       },
       error: function (error) {
@@ -126,7 +110,7 @@ try {
         cb();
       }
     });
-  }, 1);
+  };
 
   /**
    *  取得等待發送的Push Message
@@ -139,7 +123,7 @@ try {
   qPush.find({
     success: function(pushs) {
       async.eachSeries(pushs, function (push, cb) {
-        queMessage.push({
+        queMessage({
           'title': push.get('title'),
           'type': push.get('type'),
           'message': push.get('message'),
