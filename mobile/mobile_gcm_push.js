@@ -31,7 +31,8 @@ try {
       var message = new gcm.Message({
         collapseKey: task.type,
         data: {
-          "title": task.title,
+          "title": task.title || '',
+          "link": task.link || '',
           "message": task.message,
         }
       });
