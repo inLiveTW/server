@@ -312,7 +312,7 @@ try {
               if (!video['stream']) {
                 switch(video['type']){
                   case 'youtube':
-                    exec('youtube-dl --get-url "' + video['vid'].replace(/^y_/i,'') + '"', function (error, stream) {
+                    exec('youtube-dl --get-url https://www.youtube.com/watch\\?v\\=' + video['vid'].replace(/^y_/i,''), function (error, stream) {
                       video['stream'] = (stream || '').replace(/\s/,'');
                       cb();
                     });
