@@ -103,12 +103,14 @@ try {
               console.log('Completed! Success:', task.success, 'Error:', task.error, 'Type:', task.type, 'Title:', task.title);
               cb();
             });
-          }, cb);
+          }, function (err) {
+            cb(null, task);
+          });
         }
       },
       error: function (error) {
         console.log('Get Android Token Error: ', error.code, ' ', error.message);
-        cb();
+        cb(null, task);
       }
     });
   };
@@ -130,7 +132,7 @@ try {
           'message': push.get('message'),
           'link': push.get('link'),
         }, function (err, task) {
-          console.log('Push end: ', push.get('title'), push.get('message'));
+          console.log('Push end: ', task.title, task.message);
           push.set('android', new Date());
           push.save(null, {
             success: function() {

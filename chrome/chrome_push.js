@@ -78,8 +78,6 @@ try {
                     var count = tokens.length;
                     if (count < 1) {
                       console.log('No device: ', push.get('message'));
-                      push.set('chrome', new Date());
-                      push.save().then(cb, cb);
                     }else{
                       console.log('Push start: ', push.get('message'), 'device:', count);
 
@@ -112,6 +110,16 @@ try {
                         cb();
                       });
                     }
+                    push.set('chrome', new Date());
+                    push.save(null, {
+                      success: function() {
+                        cb();
+                      },
+                      error: function(push, error) {
+                        console.log("Save push error:", error);
+                        cb();
+                      }
+                    });
                   },
                   error: function(error) {
                     console.log('Get Chrome Token Error: ', error.code, ' ', error.message);
