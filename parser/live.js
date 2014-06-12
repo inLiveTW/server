@@ -65,7 +65,7 @@ try {
                           cid: id,
                           vid: 'y_' + vid,
                           user: id,
-                          url: 'http://youtu.be/' + vid,
+                          url: 'https://www.youtube.com/watch?v=' + vid,
                           embed: 'http://www.youtube.com/embed/' + vid + '?autoplay=1',
                           shorten: 'http://youtu.be/' + vid,
                       });

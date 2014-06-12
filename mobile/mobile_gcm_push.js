@@ -78,7 +78,18 @@ try {
           console.log('No device: ', task.title, task.message);
           cb();
         }else{
-          var que = [];
+          for (var i=0, len=tokens.length; i<len; i+=800) {
+            var que = [];
+            for (var j=0; j<800; j++){
+              if ( tokens[i+j] ) {
+                que.push(tokens[i+j].get('token'));
+              }else{
+                break;                
+              }
+            }
+            queRequest.push(que);
+          }
+
           tokens.forEach(function(token){
             que.push(token.get('token'));
             if ( que.length >= 800 ) {
@@ -89,7 +100,7 @@ try {
                 'message': task.message,
                 'link': task.link,
               }, function (err, task) {
-                console.log('Completed! Success:', task.success, ' Error:', task.error, ' Title:', task.title);
+                console.log('Completed! Success:', task.success, 'Error:', task.error, 'Type:', task.type, 'Title:', task.title);
               });
               que = [];
             }
@@ -103,7 +114,7 @@ try {
             'message': task.message,
             'link': task.link,
           }, function (err, task) {
-            console.log('Completed! Success:', task.success, ' Error:', task.error, ' Title:', task.title);
+            console.log('Completed! Success:', task.success, 'Error:', task.error, 'Type:', task.type, 'Title:', task.title);
             setTimeout(function () {
               cb();
             }, 500);
