@@ -54,6 +54,7 @@ try {
         if ( completed ) {
             clearTimeout(completed);
         }
+        console.log("APNS Push Error:", errCode);
         task.succes -= 1;
         task.error += 1;
         completed = setTimeout(function(){
