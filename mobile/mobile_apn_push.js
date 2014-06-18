@@ -28,8 +28,8 @@ try {
     var service = new apn.Connection({
       address: 'gateway.push.apple.com',
       // gateway: 'gateway.sandbox.push.apple.com',
-      cert: '../config/apns_production.pem',
-      key: '../config/apns_production.pem'
+      cert: pwd + '/../config/apns_production.pem',
+      key: pwd + '../config/apns_production.pem'
     });
 
     service
