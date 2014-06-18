@@ -8,7 +8,9 @@ try {
   var Release = DataBase.Release;
 
   var parser = function (cb){
-    var date = new Date().toISOString();
+    var date = new Date();
+    date.setHours(date.getHours()-6);
+    date = date.toISOString();
 
     var source = [
       'https://www.googleapis.com/calendar/v3/calendars/s6jage479tquhj3mr7abhecs48%40group.calendar.google.com/events?key=AIzaSyBqSFbeQLYKQl80FblMuj682zvpbpPVG_o&timeZone=Asia/Taipei&timeMin='+date,
