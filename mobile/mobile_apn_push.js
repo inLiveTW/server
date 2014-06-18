@@ -98,7 +98,7 @@ try {
           async.eachSeries(queue, function (que, cb) {
             queRequest({
               'token': que,
-              'title': '『' + (push_type[task.type] || '其他通知') + '』',
+              'title': task.title,
               'type': task.type,
               'message': task.message,
               'link': task.link,
@@ -130,7 +130,7 @@ try {
     success: function(pushs) {
       async.eachSeries(pushs, function (push, cb) {
         queMessage({
-          'title': push.get('title'),
+          'title': '『' + (push_type[push.get('type')] || '其他通知') + '』',
           'type': push.get('type'),
           'message': push.get('message'),
           'link': push.get('link'),
