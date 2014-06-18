@@ -1,5 +1,6 @@
 var async = require('async');
 var apn = require('apn');
+var fs = require('fs');
 
 try {
 
@@ -20,9 +21,9 @@ try {
   pwd = pwd.substr(0, pwd.lastIndexOf('/'));
 
   if ( !fs.existsSync(pwd + '/../config/apns_production.pem') ) {
-    throw "Can not open database.json";
+    throw "Can not open PEM";
   }
-  
+
   var cert = fs.readFileSync(pwd + '/../config/apns_production.pem');
 
   var queRequest = function (task, cb) {
