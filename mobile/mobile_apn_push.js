@@ -19,6 +19,10 @@ try {
   var pwd = process.argv[1];
   pwd = pwd.substr(0, pwd.lastIndexOf('/'));
 
+  if ( !fs.existsSync(pwd + '/../config/apns_production.pem') ) {
+    throw "Can not open database.json";
+  }
+  
   var cert = fs.readFileSync(pwd + '/../config/apns_production.pem');
 
   var queRequest = function (task, cb) {
