@@ -9,6 +9,13 @@ try {
   var Push = Live.Object.extend("push");
   var Ios_Token = Live.Object.extend("ios_token");
 
+  var push_type = {
+    'message': '即時訊息',
+    'event': '事件提醒',
+    'reporter': '公民記者',
+    'live': '節目開播',
+  }
+
   var pwd = process.argv[1];
   pwd = pwd.substr(0, pwd.lastIndexOf('/'));
 
