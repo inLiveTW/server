@@ -19,6 +19,8 @@ try {
   var pwd = process.argv[1];
   pwd = pwd.substr(0, pwd.lastIndexOf('/'));
 
+  var cert = fs.readFileSync(pwd + '/../config/apns_production.pem');
+
   var queRequest = function (task, cb) {
     // 預設成功與失敗筆數皆為零
     task.success = 0;
@@ -28,8 +30,8 @@ try {
     var service = new apn.Connection({
       address: 'gateway.push.apple.com',
       // gateway: 'gateway.sandbox.push.apple.com',
-      cert: pwd + '/../config/apns_production.pem',
-      key: pwd + '/../config/apns_production.pem'
+      cert: cert,
+      key: cert
     });
 
     service
