@@ -29,7 +29,7 @@ try {
       address: 'gateway.push.apple.com',
       // gateway: 'gateway.sandbox.push.apple.com',
       cert: pwd + '/../config/apns_production.pem',
-      key: pwd + '../config/apns_production.pem'
+      key: pwd + '/../config/apns_production.pem'
     });
 
     service
