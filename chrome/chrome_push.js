@@ -65,9 +65,9 @@ try {
       success: function(tokens) {
         var len = tokens.length;
         if (len < 1) {
-          console.log('No device: ', msg.message));
+          console.log('No device: ', msg.message);
         }else{
-          console.log('Push start: ', msg.message), 'device:', len);
+          console.log('Push start: ', msg.message, 'device:', len);
 
           var queue = [];
 
@@ -93,7 +93,7 @@ try {
               });
             }, cb);
           }, function () {
-            console.log('Push end: ', msg.message));
+            console.log('Push end: ', msg.message);
             cb();
           });
         }
