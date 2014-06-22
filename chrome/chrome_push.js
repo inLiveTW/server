@@ -59,7 +59,7 @@ try {
   var queMessage = function(msg, cb) {
     var qToken = new Live.Query(Chrome_Token);
 
-    qToken.equalTo("channel", push.get('type')+'');
+    qToken.equalTo("channel", msg.type+'');
     qToken.limit(10000);
     qToken.find({
       success: function(tokens) {
@@ -114,6 +114,7 @@ try {
       query.equalTo('chrome', undefined);
       query.find({
         success: function(pushs) {
+          console.log(pushs);
           async.eachSeries(pushs, function (push, cb) {
             queMessage({
               "access": access,
