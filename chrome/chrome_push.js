@@ -82,7 +82,7 @@ try {
           async.eachSeries(queue, function(tokens, cb) {
             async.each(tokens, function(token, cb) {
               queRequest({
-                'access': access,
+                'access': msg.access,
                 'token': token,
                 'message': msg.message,
                 'link': msg.link,
