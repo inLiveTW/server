@@ -23,7 +23,7 @@ try {
   var queRequest = function (task, callback) {
     // 預設成功與失敗筆數皆為零
     task.success = 0;
-    task.error = 0;
+    task.failed = 0;
 
     try {
       var sender = new gcm.Sender(DataBase.Config.push.android);
@@ -45,7 +45,7 @@ try {
           var results = result.results;
           for (var i = 0, len = results.length; i < len; i++) {
             if( results[i].error ) {
-              task.error += 1;
+              task.failed += 1;
             }else{
               task.success += 1;
             }
@@ -100,7 +100,7 @@ try {
               'message': task.message,
               'link': task.link,
             }, function (err, task) {
-              console.log('Completed! Success:', task.success, 'Error:', task.error, 'Type:', task.type, 'Title:', task.title);
+              console.log('Completed! Success:', task.success, 'Failed:', task.failed, 'Type:', task.type, 'Title:', task.title);
               cb();
             });
           }, function (err) {

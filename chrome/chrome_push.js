@@ -16,17 +16,15 @@ try {
     'live': '節目開播',
   }
 
-  var sendNotify = function(task, cb) {
-    var access = task.access;
-    var token = task.token;
+  var queRequest = function(task, cb) {
     var message = JSON.stringify({
-      'channelId': token,
+      'channelId': task.token,
       'subchannelId': '0',
       'payload': new Buffer(JSON.stringify({
         'type': task.type || 'message',
         'link': task.link || '',
         'title': '『' + (push_type[task.type] || '其他通知') + '』',
-        'message': (task.message || '') + "\n- " + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' ' + task.name
+        'message': (task.message || '') + "\n- " + new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'')
       })).toString('base64')
     });
 
@@ -37,7 +35,7 @@ try {
       headers: {
           'Content-Type': 'application/json',
           'Content-Length': message.length,
-          'Authorization': 'Bearer ' + access
+          'Authorization': 'Bearer ' + task.access,
       }
     }, function(res){
       var body = '';
@@ -58,7 +56,54 @@ try {
     request.end();
   }
 
-  var queue = [];
+  var queMessage = function(msg, cb) {
+    var qToken = new Live.Query(Chrome_Token);
+
+    qToken.equalTo("channel", push.get('type')+'');
+    qToken.limit(10000);
+    qToken.find({
+      success: function(tokens) {
+        var len = tokens.length;
+        if (len < 1) {
+          console.log('No device: ', push.get('message'));
+        }else{
+          console.log('Push start: ', push.get('message'), 'device:', len);
+
+          var queue = [];
+
+          for (var i=0; i<len; i+=10) {
+            var que = [];
+            for (var j=0; j<10; j++) {
+              tokens[i+j] && que.push(tokens[i+j].get('token'));
+            }
+            queue.push(que);
+          };
+
+          async.eachSeries(queue, function(tokens, cb) {
+            async.each(tokens, function(token, cb) {
+              queRequest({
+                'access': access,
+                'token': token,
+                'message': msg.message,
+                'link': msg.link,
+                'type': msg.type,
+              }, function (err, task) {
+                console.log('completed!', task.token);
+                cb(null);
+              });
+            }, cb);
+          }, function () {
+            console.log('Push end: ', push.get('message'));
+            cb();
+          });
+        }
+      },
+      error: function(error) {
+        console.log('Get Chrome Token Error: ', error.code, ' ', error.message);
+        cb();
+      }
+    });
+  }
 
   DataBase.getGoogleAccess(function(err, access){
     if (err) {
@@ -70,62 +115,23 @@ try {
       query.find({
         success: function(pushs) {
           async.eachSeries(pushs, function (push, cb) {
-            var qToken = new Live.Query(Chrome_Token);
-                qToken.equalTo("channel", push.get('type')+'');
-                qToken.limit(10000);
-                qToken.find({
-                  success: function(tokens) {
-                    var count = tokens.length;
-                    if (count < 1) {
-                      console.log('No device: ', push.get('message'));
-                    }else{
-                      console.log('Push start: ', push.get('message'), 'device:', count);
-
-                      for (var i=0; i<count; i+=10) {
-                        var que = [];
-                        for (var j=0; j<10; j++) {
-                          tokens[i+j] && que.push(tokens[i+j].get('token'));
-                        }
-                        queue.push(que);
-                      };
-
-                      async.eachSeries(queue, function(tokens, cb) {
-                        async.each(tokens, function(token, cb) {
-                          sendNotify({
-                            'access': access,
-                            'token': token,
-                            'name': push.get('name'),
-                            'message': push.get('message'),
-                            'link': push.get('link'),
-                            'type': push.get('type')
-                          }, function (err, task) {
-                            console.log('completed!', task.token);
-                            cb();
-                          });
-                        }, function () {
-                          cb();
-                        });
-                      }, function () {
-                        console.log('Push end: ', push.get('message'));
-                        cb();
-                      });
-                    }
-                    push.set('chrome', new Date());
-                    push.save(null, {
-                      success: function() {
-                        cb();
-                      },
-                      error: function(push, error) {
-                        console.log("Save push error:", error);
-                        cb();
-                      }
-                    });
-                  },
-                  error: function(error) {
-                    console.log('Get Chrome Token Error: ', error.code, ' ', error.message);
-                    cb();
-                  }
-                });
+            queMessage({
+              "access": access,
+              "type": push.get("type"),
+              "link": push.get("link"),
+              "message": push.get("message"),
+            }, function (err, task){
+              push.set('chrome', new Date());
+              push.save(null, {
+                success: function() {
+                  cb();
+                },
+                error: function(push, error) {
+                  console.log("Save push error:", error);
+                  cb();
+                }
+              });
+            });
           }, function () {
             process.exit(0);
           });

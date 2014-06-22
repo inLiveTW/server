@@ -29,8 +29,23 @@ try {
   var queRequest = function (task, cb) {
     // 預設成功與失敗筆數皆為零
     task.success = 0;
-    task.error = 0;
+    task.failed = 0;
+
     var completed = null;
+    var completedToSend = function (success, failed) {
+        if ( completed === false ) {
+            return;
+        }
+        if ( completed ) {
+            clearTimeout(completed);
+        }
+        task.success += success || 0;
+        task.failed += failed || 0;
+        completed = setTimeout(function(){
+            completed = false;
+            cb(null, task);
+        }, 1000);
+    }
 
     var service = new apn.Connection({
       address: 'gateway.push.apple.com',
@@ -49,24 +64,10 @@ try {
 
     service
     .on('transmitted', function(notification, device) {
-        if ( completed ) {
-            clearTimeout(completed);
-        }
-        task.success += 1;
-        completed = setTimeout(function(){
-            cb(null, task);
-        }, 1000);
+      completedToSend(1, 0);
     })
     .on('transmissionError', function(errCode, notification, device) {
-        if ( completed ) {
-            clearTimeout(completed);
-        }
-        console.log("APNS Push Error:", errCode);
-        task.succes -= 1;
-        task.error += 1;
-        completed = setTimeout(function(){
-            cb(null, task);
-        }, 1000);
+      completedToSend(-1, 1);
     });
 
     var note = new apn.notification();
@@ -111,7 +112,7 @@ try {
               'message': task.message,
               'link': task.link,
             }, function (err, task) {
-              console.log('Completed! Success:', task.success, 'Error:', task.error, 'Type:', task.type, 'Title:', task.title);
+              console.log('Completed! Success:', task.success, 'Failed:', task.failed, 'Type:', task.type, 'Title:', task.title);
               cb();
             });
           }, function (err) {
