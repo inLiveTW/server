@@ -57,9 +57,11 @@ try {
     function(){
       var qPush4Live = new Live.Query(Push4Live);
       qPush4Live.lessThanOrEqualTo('start', new Date());
+      qPush4Live.descending('start');
       qPush4Live.limit(20);
       qPush4Live.find({
         success: function(pushs) {
+          console.log(pushs);
           var list = [];
           pushs.forEach(function(push){
             list.push({
