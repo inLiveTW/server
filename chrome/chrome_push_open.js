@@ -9,7 +9,7 @@ try {
   var Open = Live.Object.extend("open");
   var Chrome_Token = Live.Object.extend("chrome_token");
 
-  var sendNotify = function(task, cb) {
+  var queRequest = function(task, cb) {
     var access = task.access;
     var token = task.token;
     var message = JSON.stringify({
@@ -89,7 +89,7 @@ try {
 
                   async.eachSeries(queue, function(tokens, cb) {
                     async.each(tokens, function(token, cb) {
-                      sendNotify({
+                      queRequest({
                         'access': access,
                         'token': token,
                         'count': count
