@@ -115,22 +115,20 @@ try {
       query.find({
         success: function(pushs) {
           async.eachSeries(pushs, function (push, cb) {
-            queMessage({
-              "access": access,
-              "type": push.get("type"),
-              "link": push.get("link"),
-              "message": push.get("message"),
-            }, function (err, task){
-              push.set('chrome', new Date());
-              push.save(null, {
-                success: function() {
-                  cb();
-                },
-                error: function(push, error) {
-                  console.log("Save push error:", error);
-                  cb();
-                }
-              });
+            push.set('chrome', new Date());
+            push.save(null, {
+              success: function() {
+                queMessage({
+                  "access": access,
+                  "type": push.get("type"),
+                  "link": push.get("link"),
+                  "message": push.get("message"),
+                }, cb);
+              },
+              error: function(push, error) {
+                console.log("Save push error:", error);
+                cb();
+              }
             });
           }, function () {
             process.exit(0);
