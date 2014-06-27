@@ -88,11 +88,11 @@ try {
                 'link': msg.link,
                 'type': msg.type,
               }, function (err, task) {
-                cb(null);
+                cb();
               });
             }, function () {
-              console.log('completed!', task.message, 'sum:',task.token);
-              cb(null);
+              console.log('completed!', msg.message, 'sum:', tokens.length);
+              cb();
             });
           }, function () {
             console.log('Push end: ', msg.message);
