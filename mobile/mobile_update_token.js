@@ -29,7 +29,7 @@ try {
     var Obj = Token[type];
     var token;
     var now = new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'');
-    DB.equalTo("uuid", data['uuid']);
+    DB.equalTo("token", data['token']);
     DB.first({
       success: function(token) {
         if ( token ) {
@@ -86,7 +86,7 @@ try {
         var uuid = item.get('uuid');
         var token = item.get('token');
         var updateAt = new Date(item.createdAt).getTime();
-        if ( /[\w-]+/i.exec(uuid) && /[\w]+/i.exec(token)) {
+        if (/[\w]+/i.exec(token)) {
           if ( tokens[type] ) {
             if ( !tokens[type][uuid] || tokens[type][uuid]['responseAt'] < updateAt) {
               tokens[type][uuid] = {
