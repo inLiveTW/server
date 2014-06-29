@@ -5,7 +5,7 @@ var https = require('https'),
 try {
 
   var DataBase = require('../class/initial.js');
-  var Release = DataBase.Release;
+  var ReleaseEvent = DataBase.ReleaseEvent;
 
   var parser = function (cb){
     var date = new Date();
@@ -78,7 +78,7 @@ try {
         });
       });
 
-      Release.child('event').set(events, function(){
+      ReleaseEvent.child('event').set(events, function(){
         cb(null, count);
       });
     });

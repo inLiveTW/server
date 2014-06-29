@@ -8,9 +8,9 @@ var GSpreadsheet = require('gspreadsheet');
 try {
 
   var DataBase = require('../class/initial.js');
-  var Live = DataBase.Live,
-      FBgraph = DataBase.FBgraph,
-      Release = DataBase.Release;
+  var Live = DataBase.Live;
+  var FBgraph = DataBase.FBgraph;
+  var ReleaseNews = DataBase.ReleaseNews;
   
   var gspreadsheet = new GSpreadsheet('1LN0qN4NmaRYByW-VMywEneVYovCIt8ExpinZRhJDuKw', '921695175');
 
@@ -40,7 +40,7 @@ try {
           "id": res.id,
           "about": res.about,
           "name": res.name,
-          "cover": res.cover.source,
+          "cover": res.cover && res.cover.source || '',
           "picture": "https://graph.facebook.com/" + res.id + "/picture"
         };
         cb(null, data);
@@ -78,7 +78,7 @@ try {
           results.forEach(function(item){
             data[item.id] = item;
           });
-          Release.child('news').set(data, function(err){
+          ReleaseNews.child('news').set(data, function(err){
             cb && cb();
           });
         });

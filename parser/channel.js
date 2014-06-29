@@ -5,7 +5,7 @@ try {
 
   var DataBase = require('../class/initial.js');
   var Live = DataBase.Live;
-  var Release = DataBase.Release;
+  var ReleaseData = DataBase.ReleaseData;
 
   var Channel = Live.Object.extend("channel");
 
@@ -116,7 +116,7 @@ try {
                           count += 1;
                       });
                   });
-                  Release.child('channel').set(public_channel, function(){
+                  ReleaseData.child('channel').set(public_channel, function(){
                     cb && cb(count);
                   });
               });

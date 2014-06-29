@@ -5,7 +5,7 @@ try {
   var DataBase = require('../class/initial.js');
   var Live = DataBase.Live,
       Mobile = DataBase.Mobile,
-      Release = DataBase.Release;
+      ReleaseData = DataBase.ReleaseData;
 
   var Push4Mobile = Mobile.Object.extend("push");
   var Push4Live = Live.Object.extend("push");
@@ -77,7 +77,7 @@ try {
             return ( x.datetime < y.datetime) ? 1 : -1;
           });
 
-          Release.child('notify').set(list, function(){
+          ReleaseData.child('notify').set(list, function(){
             console.log(new Date(Date.now()+8*60*60*1000).toISOString().replace(/\..+/i,'') + ' Push Run! ' + list.length);
             process.exit(0);
           });

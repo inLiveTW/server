@@ -30,10 +30,31 @@ Chrome.Cloud.useMasterKey();
 Mobile.initialize(cfg.mobile.appid, cfg.mobile.key, cfg.mobile.master);
 Mobile.Cloud.useMasterKey();
 
-var Release = new Firebase(cfg.release.host);
-Release.auth(cfg.release.token, function(error, result) {
+var ReleaseLive = new Firebase(cfg.release_live.host);
+ReleaseLive.auth(cfg.release_live.token, function(error, result) {
   if(error) {
-    throw "Login Failed!" + error;
+    console.log("Login Failed!", error);
+  }
+});
+
+var ReleaseEvent = new Firebase(cfg.release_event.host);
+ReleaseEvent.auth(cfg.release_event.token, function(error, result) {
+  if(error) {
+    console.log("Login Failed!", error);
+  }
+});
+
+var ReleaseNews = new Firebase(cfg.release_news.host);
+ReleaseNews.auth(cfg.release_news.token, function(error, result) {
+  if(error) {
+    console.log("Login Failed!", error);
+  }
+});
+
+var ReleaseData = new Firebase(cfg.release_data.host);
+ReleaseData.auth(cfg.release_data.token, function(error, result) {
+  if(error) {
+    console.log("Login Failed!", error);
   }
 });
 
@@ -83,7 +104,10 @@ module.exports = {
   'Chrome': Chrome,
   'Mobile': Mobile,
   'FBgraph': Graph,
-  'Release': Release,
+  'ReleaseLive': ReleaseLive,
+  'ReleaseEvent': ReleaseEvent,
+  'ReleaseNews': ReleaseNews,
+  'ReleaseData': ReleaseData,
   'getGoogleAccess': getGoogleAccess,
   'Config': cfg
 };

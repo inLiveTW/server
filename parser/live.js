@@ -29,7 +29,7 @@ try {
   var DataBase = require('../class/initial.js');
   var Live = DataBase.Live;
   var Mobile = DataBase.Mobile;
-  var Release = DataBase.Release;
+  var ReleaseLive = DataBase.ReleaseLive;
 
   var Channel = Live.Object.extend("channel");
   var Open = Live.Object.extend("open");
@@ -154,7 +154,7 @@ try {
           },
           // 取得已知的直播清單
           'database': function(cb){
-              Release.child('live').once('value', function(live) {
+              ReleaseLive.child('live').once('value', function(live) {
                   var db = live.val();
                   for (key in db)
                   {
@@ -331,7 +331,7 @@ try {
             }, cb);
           }
         ], function(){
-            Release.child('live').set(live, function(){
+            ReleaseLive.child('live').set(live, function(){
               async.each(liveNew, function(active, cb){
                 var open = new Open();
                 open.set('title', active.title);
