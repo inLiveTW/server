@@ -5,14 +5,6 @@ var time = require('time');
 var exec = require('child_process').exec;
 var GSpreadsheet = require('gspreadsheet');
 
-/* 經緯度查詢 */
-var geocoderProvider = 'google';
-var httpAdapter = 'http';
-var geocoder = require('node-geocoder').getGeocoder(geocoderProvider, httpAdapter);
-/* 經緯度查詢 */
-
-
-
 var radix62 = [
   '0','1','2','3','4','5','6','7','8','9',
   'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
@@ -107,8 +99,6 @@ try {
                           embed: 'http://www.ustream.tv/embed/' + channel.id + '?wmode=direct&autoplay=true',
                           thumb: channel.imageUrl.small,
                           shorten: 'http://ustre.am/' + parse62(channel.id),
-      //                  location: ??? ,
-      //                  latlngColumn: ???  需要經緯度
                       });
                   }
               });
@@ -282,12 +272,6 @@ try {
                           var location = {};
                           location[parent] = 1;
                           object.set('location', location);
-
-                          /*
-                              var latlngColumn = 從geoEncoder拿資料   
-                              object.set('latlngColumn', latlngColumn); ???
-                          */
-
                         }
                       }
                       cb(null, object);
@@ -309,33 +293,12 @@ try {
                   object.set('name', (live[key]['type']=='youtube' ? 'y_' : 'u_')+live[key]['vid']);
                   object.set('location', location);
 
-              /*
-                  var latlngColumn = 從geoEncoder拿資料   
-                  object.set('latlngColumn', latlngColumn); ???
-              */
-
                   live[key]['location'] = getHighest(location);
 
-
-              // 從geoEncoder拿經緯度資料
-
-                  var latlngColumn; 
-
-                  geocoder.geocode(getHighest(location), function(err, res) {
-                      console.log(res);
-                      latlngColumn = res.latitude + ',' + res.longitude;
-                      live[key]['latlngColumn'] = latlngColumn;
-
-                      object.save(null, {
-                        'success': function(){ cb && cb(); },
-                        'error': function(){ cb && cb(); }
-                      });
-                
-                  });  
-        /*          object.save(null, {
-                        'success': function(){ cb && cb(); },
-                        'error': function(){ cb && cb(); }
-                  });  */
+                  object.save(null, {
+                    'success': function(){ cb && cb(); },
+                    'error': function(){ cb && cb(); }
+                  });
                 });
               }, cb);
           },
