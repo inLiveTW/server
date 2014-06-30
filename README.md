@@ -30,6 +30,7 @@ y_zxwBWUT-gIM: {
   vid: "zxwBWUT-gIM",
   vuid: "53549df1-9e86-4807-8623-b1962b3f6bdc",
   location: "測試用頻道",
+  latlngColumn: "緯度,經度",
   type: "youtube",
   url: "http://youtu.be/zxwBWUT-gIM",
   user: "UC6BgDThjkr6sEOovgcrvXjQ",
