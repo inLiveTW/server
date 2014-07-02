@@ -12,7 +12,7 @@ try {
   var FBgraph = DataBase.FBgraph;
   var ReleaseNews = DataBase.ReleaseNews;
   
-  var gspreadsheet = new GSpreadsheet('1LN0qN4NmaRYByW-VMywEneVYovCIt8ExpinZRhJDuKw', '921695175');
+  var gspreadsheet = new GSpreadsheet('1LN0qN4NmaRYByW-VMywEneVYovCIt8ExpinZRhJDuKw', '2');
 
   var News = Live.Object.extend("news");
 

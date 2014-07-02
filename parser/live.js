@@ -24,7 +24,7 @@ var color = {
 
 try {
 
-  var gspreadsheet = new GSpreadsheet('1LN0qN4NmaRYByW-VMywEneVYovCIt8ExpinZRhJDuKw', '0');
+  var gspreadsheet = new GSpreadsheet('1LN0qN4NmaRYByW-VMywEneVYovCIt8ExpinZRhJDuKw', '1');
 
   var DataBase = require('../class/initial.js');
   var Live = DataBase.Live;
