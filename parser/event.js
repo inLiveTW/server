@@ -36,45 +36,49 @@ try {
 
       results.forEach(function (list) {
         list.forEach(function (item) {
-          var start = 
-            item.start && (item.start.date && item.start.date + 'T00:00:00+08:00' || item.start.dateTime)
-            || new Date(new Date().getTime()+8*60*60*1000).toISOString().replace(/\..+/gi,'+08:00');
+          try {
+            var start = 
+              item.start && (item.start.date && item.start.date + 'T00:00:00+08:00' || item.start.dateTime)
+              || new Date(new Date().getTime()+8*60*60*1000).toISOString().replace(/\..+/gi,'+08:00');
 
-          if ( item.recurrence ) {
-            var opt = RRule.parseString((item.recurrence+'').replace('RRULE:',''))
-                opt.dtstart = new Date(start);
-            var next = new RRule(opt).between(new Date(), new Date(Date.now()+14*24*60*60*1000));
-            if ( ! next.length ) {
-              return ;
-            }else{
-              start = new Date(new Date(next[0]).getTime()+8*60*60*1000).toISOString().replace(/\..+/gi,'+08:00');
-            }
-          }
-
-          var eData = {}
-          var attr = (item.description || '').match(/\[[^\]]+\][^\n]+/gi);
-          if ( attr ) {
-            attr.forEach(function(info){
-              info = /\[([^\]]+)\]([^\n]+)/i.exec(info);
-              if (info) {
-                eData[info[1].trim()] = info[2].trim();
+            if ( item.recurrence ) {
+              var opt = RRule.parseString((item.recurrence+'').replace('RRULE:',''))
+                  opt.dtstart = new Date(start);
+              var next = new RRule(opt).between(new Date(), new Date(Date.now()+14*24*60*60*1000));
+              if ( ! next.length ) {
+                return ;
+              }else{
+                start = new Date(new Date(next[0]).getTime()+8*60*60*1000).toISOString().replace(/\..+/gi,'+08:00');
               }
-            });
+            }
+
+            var eData = {}
+            var attr = (item.description || '').match(/\[[^\]]+\][^\n]+/gi);
+            if ( attr ) {
+              attr.forEach(function(info){
+                info = /\[([^\]]+)\]([^\n]+)/i.exec(info);
+                if (info) {
+                  eData[info[1].trim()] = info[2].trim();
+                }
+              });
+            }
+
+            eData['type'] = 'google';
+            eData['day'] = item.start && item.start.date ? true : false;
+            eData['start'] = start;
+            eData['end'] = item.end && (item.end.date && item.end.date + 'T00:00:00+08:00' || item.end.dateTime) || '';
+            eData['title'] = item.summary || '';
+            eData['location'] = item.location || '';
+            eData['link'] = eData['link'] || item.htmlLink;
+
+            if (item.summary) {
+              events['google_' + item.id] = eData;
+            }
+
+            count += 1;
           }
-
-          eData['type'] = 'google';
-          eData['day'] = item.start && item.start.date ? true : false;
-          eData['start'] = start;
-          eData['end'] = item.end && (item.end.date && item.end.date + 'T00:00:00+08:00' || item.end.dateTime) || '';
-          eData['title'] = item.summary || '';
-          eData['location'] = item.location || '';
-          eData['link'] = eData['link'] || item.htmlLink;
-
-          if (item.summary) {
-            events['google_' + item.id] = eData;
+          catch (err) {
           }
-
-          count += 1;
         });
       });
 
