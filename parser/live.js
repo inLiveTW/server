@@ -112,13 +112,11 @@ try {
   }
 
   var getHighest = function (list, deft){
-    var win = null, vote = 0;
+    var win = '', vote = 0;
     for (name in list) {
-      if ( list[name] > vote ) {
+      if ( list[name] >= vote ) {
         win = name;
         vote = list[name];
-      }else if ( list[name] == vote && deft != name ){
-        win = deft;
       }
     };
     return win;
@@ -262,7 +260,7 @@ try {
 
                   // 參考之前位置
                   var query = new Live.Query(Live_Location);
-                  query.equalTo("name", (live[key]['type']=='youtube' ? 'y_' : 'u_')+live[key]['vid']);
+                  query.equalTo("name", live[key]['vid']);
 
                   query.first({
                     success: function(parent) {
